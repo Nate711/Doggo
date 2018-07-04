@@ -1,4 +1,7 @@
-// This example illustrates cooperative scheduling. Cooperative scheduling
+// Extreme Mobility Doggo Code
+
+// Notes from cooperative scheduling ChibiOS example
+// This code uses cooperative scheduling. Cooperative scheduling
 // simplifies multitasking since no preemptive context switches occur.
 //
 // You must call chYield() or other ChibiOS functions such as chThdSleep
@@ -11,32 +14,57 @@
 // with equal priority and the round robin becomes cooperative.
 // Note that higher priority threads can still preempt, the kernel
 // is always preemptive.
-//
+
 #include "ChRt.h"
 #include "Arduino.h"
 #include "ODriveArduino.h"
 
-volatile uint32_t count = 0;
-volatile uint32_t maxDelay = 0;
-
 //------------------------------------------------------------------------------
 // Initialize objects related to ODrives
 
+// TODO: There's a lot of repetition in this section that's hinting we should
+// somehow encapsulate more behavior. We could put the serial references inside
+// the ODriveArduino class and put the pos estimate struct in there too
+
 // Make references to Teensy <-> computer serial (aka USB) and the ODrive(s)
 HardwareSerial& odrv0Serial = Serial1;
+HardwareSerial& odrv1Serial = Serial2;
+HardwareSerial& odrv2Serial = Serial3;
+HardwareSerial& odrv3Serial = Serial4;
 
 // Make structs to hold motor readings
 // TODO: figure out if I want to mimic the ODive struct style or not
 struct ODrive {
     struct Axis {
-        float pos_estimate = 0;
+        float pos_estimate = 0; // in counts
+        float ENCODER_OFFSET = 0; // in counts, TODO: need to configure this
+
+        // NOTE: abs_pos is the SUM of estiamte and offset
+        float abs_pos_estimate = pos_estimate + ENCODER_OFFSET;
     };
     Axis axis0,axis1;
-} odrv0;
+} odrv0, odrv1, odrv2, odrv3;
 
 // ODriveArduino objects
 // These objects are responsible for sending commands to the ODrive
 ODriveArduino odrv0Interface(odrv0Serial);
+ODriveArduino odrv1Interface(odrv1Serial);
+ODriveArduino odrv2Interface(odrv2Serial);
+ODriveArduino odrv3Interface(odrv3Serial);
+
+//------------------------------------------------------------------------------
+// Global variables. These are needed for cross-thread communication!!
+
+struct LegGain {
+    float Kp_theta = 0;
+    float Kd_theta = 0;
+
+    float Kp_gamma = 0;
+    float Kd_gamma = 0;
+} leg0;
+
+volatile uint32_t count = 0;
+volatile uint32_t maxDelay = 0;
 
 //------------------------------------------------------------------------------
 // Helper utilities
@@ -48,6 +76,25 @@ template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(a
 // E-STOP function
 void ESTOP() {
     while(true) {}
+}
+
+//------------------------------------------------------------------------------
+// IdleThread: increment a counter and records max delay.
+// The max delay is the maximum time chThdYield takes up. chThdYield tells the
+// OS to run other threads.
+// 64 byte stack beyond task switch and interrupt needs.
+static THD_WORKING_AREA(waIdleThread, 64);
+
+static THD_FUNCTION(IdleThread, arg) {
+    (void)arg;
+    while (true) {
+        count++;
+        uint32_t t = micros();
+        // Yield so other threads can run.
+        chThdYield();
+        t = micros() - t;
+        if (t > maxDelay) maxDelay = t;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -98,6 +145,31 @@ static THD_WORKING_AREA(waPositionControlThread, 128);
 static THD_FUNCTION(PositionControlThread, arg) {
     (void)arg;
 
+    // PID loop FOR ONE LEG
+    float alpha = (float) odrv0.axis0.abs_pos_estimate;
+    float beta = (float) odrv0.axis1.abs_pos_estimate;
+
+    float theta = alpha/2.0 + beta/2.0;
+    float gamma = beta/2.0 - alpha/2.0;
+
+    float theta_sp = 0; // TODO get from somewhere
+    float gamma_sp = 0; // TODO get from somewhere
+
+    float p_term_theta = leg0.Kp_theta * (theta_sp - theta);
+    float d_term_theta = leg0.Kd_theta * (0); // TODO: Add motor velocities to position message from odrive
+
+    float p_term_gamma = leg0.Kp_gamma * (gamma_sp - gamma);
+    float d_term_gamma = leg0.Kd_gamma * (0); // TODO: Add motor velocities to position message from odrive
+
+    // TODO: clamp (ie constrain) the outputs to -1.0 to 1.0
+    float tau_theta = p_term_theta + d_term_theta;
+    float tau_gamma = p_term_gamma + d_term_gamma;
+
+    // TODO: add code to turn tau_theta d=and tau_gamma back into motor torques
+    // Is super simple but I'm just forgetting the signs
+
+    // odrv0Interface.SetDualCurrent(tau_alpha, tau_gamma);
+
     // DEBUG only: send two zero current commands
     // NOTE: when odrive is in closed loop position control I doubt
     // current commands will do anything
@@ -141,7 +213,6 @@ static THD_FUNCTION(SerialThread, arg) {
             // Check if we got stop character, aka newline
             if(c == '\n') {
                 parsePositionMsg(msg,msg_idx);
-                // TODO: add checksum
                 msg_idx = 0;
             }
         }
@@ -159,36 +230,25 @@ static THD_FUNCTION(SerialThread, arg) {
  * @param len int   : message length
  * TODO: make it generalizable to other odrives and other odriveInterfaces
  */
+
 void parsePositionMsg(char* msg, int len) {
     float m0,m1;
     int result = odrv0Interface.ParseDualPosition(msg, len, m0, m1);
     // result: 1 means success, -1 means didn't get proper message
     if (result == 1) {
+        // Update raw counts
         odrv0.axis0.pos_estimate = m0;
         odrv0.axis1.pos_estimate = m1;
+
+        // TODO: this calculation of absolute pos is in the wrong function / scope
+        // Update absolute positions
+        odrv0.axis0.abs_pos_estimate = m0 + odrv0.axis0.ENCODER_OFFSET;
+        odrv0.axis1.abs_pos_estimate = m1 + odrv0.axis1.ENCODER_OFFSET;
     } else {
         // TODO: deal with message error
     }
 }
 
-//------------------------------------------------------------------------------
-// IdleThread: increment a counter and records max delay.
-// The max delay is the maximum time chThdYield takes up. chThdYield tells the
-// OS to run other threads.
-// 64 byte stack beyond task switch and interrupt needs.
-static THD_WORKING_AREA(waIdleThread, 64);
-
-static THD_FUNCTION(IdleThread, arg) {
-    (void)arg;
-    while (true) {
-        count++;
-        uint32_t t = micros();
-        // Yield so other threads can run.
-        chThdYield();
-        t = micros() - t;
-        if (t > maxDelay) maxDelay = t;
-    }
-}
 //------------------------------------------------------------------------------
 // Continue setup() after chBegin().
 void chSetup() {
