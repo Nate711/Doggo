@@ -20,7 +20,10 @@ ODriveArduino::ODriveArduino(HardwareSerial& serial)
 
 /**
  * Parses the encoder position message and stores positions as counts
- * Assumes the message is in format "%f %f".
+ * Assumes the message is in format "<short1><short2><checksum>\n"
+ 
+ * TODO: add pll_vel to the message for better motor velocity measurement!!!
+ * This would greatly improve the noise on the Kd term!!
  * @param msg   String: Message to parse
  * @param m0    float&: Output parameter for axis0 reading
  * @param m1    float&: Output parameter for axis1 reading
