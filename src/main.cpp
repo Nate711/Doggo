@@ -152,8 +152,8 @@ static THD_FUNCTION(PositionControlThread, arg) {
     float theta = alpha/2.0 + beta/2.0;
     float gamma = beta/2.0 - alpha/2.0;
 
-    float theta_sp = 0; // TODO get from somewhere
-    float gamma_sp = 0; // TODO get from somewhere
+    float theta_sp = 0; // TODO take as struct or something
+    float gamma_sp = 0; // TODO take as struct or something
 
     float p_term_theta = leg0.Kp_theta * (theta_sp - theta);
     float d_term_theta = leg0.Kd_theta * (0); // TODO: Add motor velocities to position message from odrive
@@ -165,9 +165,9 @@ static THD_FUNCTION(PositionControlThread, arg) {
     float tau_theta = p_term_theta + d_term_theta;
     float tau_gamma = p_term_gamma + d_term_gamma;
 
-    // TODO: add code to turn tau_theta d=and tau_gamma back into motor torques
-    // Is super simple but I'm just forgetting the signs
-
+    // TODO: check signs
+    float tau_alpha = tau_theta*0.5 - tau_gamma*0.5;
+    float tau_beta = tau_theta*0.5 + tau_gamma*0.5;
     // odrv0Interface.SetDualCurrent(tau_alpha, tau_gamma);
 
     // DEBUG only: send two zero current commands
@@ -232,6 +232,14 @@ static THD_FUNCTION(SerialThread, arg) {
  */
 
 void parsePositionMsg(char* msg, int len) {
+    // DEBUG ONLY
+    Serial.print("MSG RECEIVED: ");
+    for(int i=0; i<len; i++) {
+        Serial.print(msg[i]);
+    }
+    Serial.println();
+    // end DEBUG only
+
     float m0,m1;
     int result = odrv0Interface.ParseDualPosition(msg, len, m0, m1);
     // result: 1 means success, -1 means didn't get proper message
@@ -245,7 +253,9 @@ void parsePositionMsg(char* msg, int len) {
         odrv0.axis0.abs_pos_estimate = m0 + odrv0.axis0.ENCODER_OFFSET;
         odrv0.axis1.abs_pos_estimate = m1 + odrv0.axis1.ENCODER_OFFSET;
     } else {
-        // TODO: deal with message error
+        // TODO put a debug flag somewhere, otherwise printing messages like
+        // these will probably screw things up
+        Serial.println("Parse failed. Wrong number chars in dual position");
     }
 }
 
@@ -262,14 +272,21 @@ void chSetup() {
 
     // Create ALL the threads!!
     // This is the most important part of the setup
+
+    // Idle thread
     chThdCreateStatic(waIdleThread, sizeof(waIdleThread),
         NORMALPRIO, IdleThread, NULL);
 
+    // Control threads
     chThdCreateStatic(waPositionControlThread, sizeof(waPositionControlThread),
         NORMALPRIO, PositionControlThread, NULL);
     chThdCreateStatic(waSerialThread, sizeof(waSerialThread),
         NORMALPRIO, SerialThread, NULL);
 
+    // TODO: add sensor polling thread
+    // TODO: create gait pattern thread (aka one that coordinates leg by generating leg setpoints)
+
+    // Debug threads
     chThdCreateStatic(waPrintDebugThread, sizeof(waPrintDebugThread),
         NORMALPRIO, PrintDebugThread, NULL);
     chThdCreateStatic(waBlinkThread, sizeof(waBlinkThread),
