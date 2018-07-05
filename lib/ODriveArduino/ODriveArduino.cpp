@@ -21,7 +21,7 @@ ODriveArduino::ODriveArduino(HardwareSerial& serial)
 /**
  * Parses the encoder position message and stores positions as counts
  * Assumes the message is in format "<short1><short2><checksum>\n"
- 
+
  * TODO: add pll_vel to the message for better motor velocity measurement!!!
  * This would greatly improve the noise on the Kd term!!
  * @param msg   String: Message to parse
@@ -30,19 +30,9 @@ ODriveArduino::ODriveArduino(HardwareSerial& serial)
  * @return      int:    1 if success, -1 if failed to find get full message or checksum failed
  */
 int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
-    // DEBUG ONLY
-    Serial.print("MSG RECEIVED: ");
-    for(int i=0; i<len; i++) {
-        Serial.print(msg[i]);
-    }
-    Serial.println();
-
     // check if the 4 bytes holding encoder data, 1 checksum byte, and 1 newline char were received
     if (len != 6) {
-        // TODO put a debug flag somewhere, otherwise printing messages like
-        // these will probably screw things up
-        Serial.println("Parse failed. Wrong number chars in dual position");
-        return -1;
+        return -1; // error in message length
     } else {
         // retrieve short from byte stream
         uint16_t m0 = (msg[1] << 8) | msg[0];
