@@ -47,8 +47,11 @@ int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
         checkSum ^= msg[3];
 
         // DEBUG ONLY
+#ifdef DEBUG
         Serial.print("checksum: ");
         Serial.println((int)checkSum);
+        Serial.println((int)rcvdCheckSum);
+#endif
 
         // check if the check sum matched
         if (checkSum == rcvdCheckSum) {

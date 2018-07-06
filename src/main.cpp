@@ -19,6 +19,9 @@
 #include "Arduino.h"
 #include "ODriveArduino.h"
 
+// undefine debug to stop printing debug messages
+#define DEBUG
+
 //------------------------------------------------------------------------------
 // Initialize objects related to ODrives
 
@@ -120,9 +123,10 @@ static THD_WORKING_AREA(waPrintDebugThread, 256);
 static THD_FUNCTION(PrintDebugThread, arg) {
     (void)arg;
     int count = 0;
+    const int FREQ = 10;
 
-    while(true) { // execute at 50hz
-        if(count == 50) { // print variable name header every 50 prints (1s)
+    while(true) { // execute at 10hz
+        if(count == FREQ) { // print variable name header every 1s
             Serial << "odrv0.axis0.pos_estimate\todrv0.axis1.pos_estimate\n";
             count = 0;
         }
@@ -130,7 +134,7 @@ static THD_FUNCTION(PrintDebugThread, arg) {
         Serial << odrv0.axis0.pos_estimate << "\t" << odrv0.axis1.pos_estimate << "\n";
 
         count++;
-        chThdSleepMilliseconds(20);
+        chThdSleepMilliseconds(1000/FREQ);
     }
 }
 
@@ -198,15 +202,24 @@ static THD_FUNCTION(SerialThread, arg) {
     char msg[BUFFER_SIZE]; // running buffer of received characters
     int msg_idx = 0; // keep track of which index to write to
 
+    // odrv0Serial.clear();
+    // DEBUG
+    Serial.clear();
+
     while (true) {
-        while(odrv0Serial.available()) {
+        // DEBUG ONLY
+        // Use odrv0Serial.available() when running with odrive
+        while(Serial.available()) {
             // reset buffer TODO deal with consequences of buffer overflow
             if(msg_idx >= BUFFER_SIZE) {
+#ifdef DEBUG
                 Serial << "Msg buffer exceeded!\n";
+#endif
                 msg_idx = 0;
             }
             // Read latest byte out of the serial buffer
-            char c = odrv0Serial.read();
+            // DEBUG using Serial not odrv0Serial
+            char c = Serial.read();
             // Add the char to our buffer
             msg[msg_idx++] = c;
 
@@ -233,11 +246,13 @@ static THD_FUNCTION(SerialThread, arg) {
 
 void parsePositionMsg(char* msg, int len) {
     // DEBUG ONLY
+#ifdef DEBUG
     Serial.print("MSG RECEIVED: ");
     for(int i=0; i<len; i++) {
         Serial.print(msg[i]);
     }
     Serial.println();
+#endif
     // end DEBUG only
 
     float m0,m1;
@@ -255,7 +270,9 @@ void parsePositionMsg(char* msg, int len) {
     } else {
         // TODO put a debug flag somewhere, otherwise printing messages like
         // these will probably screw things up
-        Serial.println("Parse failed. Wrong number chars in dual position");
+#ifdef DEBUG
+        Serial.println("Parse failed. Wrong message length or bad checksum.");
+#endif
     }
 }
 
@@ -274,12 +291,14 @@ void chSetup() {
     // This is the most important part of the setup
 
     // Idle thread
+
     chThdCreateStatic(waIdleThread, sizeof(waIdleThread),
         NORMALPRIO, IdleThread, NULL);
 
     // Control threads
-    chThdCreateStatic(waPositionControlThread, sizeof(waPositionControlThread),
-        NORMALPRIO, PositionControlThread, NULL);
+    // chThdCreateStatic(waPositionControlThread, sizeof(waPositionControlThread),
+    //     NORMALPRIO, PositionControlThread, NULL);
+
     chThdCreateStatic(waSerialThread, sizeof(waSerialThread),
         NORMALPRIO, SerialThread, NULL);
 
@@ -287,8 +306,9 @@ void chSetup() {
     // TODO: create gait pattern thread (aka one that coordinates leg by generating leg setpoints)
 
     // Debug threads
-    chThdCreateStatic(waPrintDebugThread, sizeof(waPrintDebugThread),
-        NORMALPRIO, PrintDebugThread, NULL);
+    // chThdCreateStatic(waPrintDebugThread, sizeof(waPrintDebugThread),
+    //     NORMALPRIO, PrintDebugThread, NULL);
+
     chThdCreateStatic(waBlinkThread, sizeof(waBlinkThread),
         NORMALPRIO, BlinkThread, NULL);
 }
