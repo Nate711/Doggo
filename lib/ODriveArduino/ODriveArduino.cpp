@@ -59,7 +59,7 @@ int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
             m0 = (float) ((int16_t) m0_16);
             m1 = (float) ((int16_t) m1_16);
 
-#ifdef Debug
+#ifdef DEBUG
             Serial << "Parsed: " << m0 << "\t" << m1 << "\n";
 #endif
             return 1;
