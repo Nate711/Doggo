@@ -149,37 +149,42 @@ static THD_WORKING_AREA(waPositionControlThread, 128);
 static THD_FUNCTION(PositionControlThread, arg) {
     (void)arg;
 
-    // PID loop FOR ONE LEG
-    float alpha = (float) odrv0.axis0.abs_pos_estimate;
-    float beta = (float) odrv0.axis1.abs_pos_estimate;
+    while(true) {
+        // PID loop FOR ONE LEG
+        float alpha = (float) odrv0.axis0.abs_pos_estimate;
+        float beta = (float) odrv0.axis1.abs_pos_estimate;
 
-    float theta = alpha/2.0 + beta/2.0;
-    float gamma = beta/2.0 - alpha/2.0;
+        float theta = alpha/2.0 + beta/2.0;
+        float gamma = beta/2.0 - alpha/2.0;
 
-    float theta_sp = 0; // TODO take as struct or something
-    float gamma_sp = 0; // TODO take as struct or something
+        float theta_sp = 0; // TODO take as struct or something
+        float gamma_sp = 0; // TODO take as struct or something
 
-    float p_term_theta = leg0.Kp_theta * (theta_sp - theta);
-    float d_term_theta = leg0.Kd_theta * (0); // TODO: Add motor velocities to position message from odrive
+        float p_term_theta = leg0.Kp_theta * (theta_sp - theta);
+        float d_term_theta = leg0.Kd_theta * (0); // TODO: Add motor velocities to position message from odrive
 
-    float p_term_gamma = leg0.Kp_gamma * (gamma_sp - gamma);
-    float d_term_gamma = leg0.Kd_gamma * (0); // TODO: Add motor velocities to position message from odrive
+        float p_term_gamma = leg0.Kp_gamma * (gamma_sp - gamma);
+        float d_term_gamma = leg0.Kd_gamma * (0); // TODO: Add motor velocities to position message from odrive
 
-    // TODO: clamp (ie constrain) the outputs to -1.0 to 1.0
-    float tau_theta = p_term_theta + d_term_theta;
-    float tau_gamma = p_term_gamma + d_term_gamma;
+        // TODO: clamp (ie constrain) the outputs to -1.0 to 1.0
+        float tau_theta = p_term_theta + d_term_theta;
+        float tau_gamma = p_term_gamma + d_term_gamma;
 
-    // TODO: check signs
-    float tau_alpha = tau_theta*0.5 - tau_gamma*0.5;
-    float tau_beta = tau_theta*0.5 + tau_gamma*0.5;
-    // odrv0Interface.SetDualCurrent(tau_alpha, tau_gamma);
+        // TODO: check signs
+        float tau_alpha = tau_theta*0.5 - tau_gamma*0.5;
+        float tau_beta = tau_theta*0.5 + tau_gamma*0.5;
+        // odrv0Interface.SetDualCurrent(tau_alpha, tau_gamma);
 
-    // DEBUG only: send two zero current commands
-    // NOTE: when odrive is in closed loop position control I doubt
-    // current commands will do anything
-    odrv0Interface.SetDualCurrent(0.0, 0.0);
+#ifdef DEBUG
+        // DEBUG only: send two zero current commands
+        // NOTE: when odrive is in closed loop position control I doubt
+        // current commands will do anything
+        Serial << "send tstamp: " << micros() << "\n";
+        odrv0Interface.SetDualCurrent(0.0, 0.0);
+#endif
 
-    chThdSleepMicroseconds(2000); // execute at 500Hz approximately
+        chThdSleepMicroseconds(10000); // execute at 500Hz approximately
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -202,14 +207,15 @@ static THD_FUNCTION(SerialThread, arg) {
     char msg[BUFFER_SIZE]; // running buffer of received characters
     int msg_idx = 0; // keep track of which index to write to
 
-    // odrv0Serial.clear();
+    odrv0Serial.clear();
     // DEBUG
-    Serial.clear();
+    // Serial.clear();
 
     while (true) {
         // DEBUG ONLY
         // Use odrv0Serial.available() when running with odrive
-        while(Serial.available()) {
+        // while(Serial.available()) {
+        while (odrv0Serial.available()) {
             // reset buffer TODO deal with consequences of buffer overflow
             if(msg_idx >= BUFFER_SIZE) {
 #ifdef DEBUG
@@ -219,7 +225,8 @@ static THD_FUNCTION(SerialThread, arg) {
             }
             // Read latest byte out of the serial buffer
             // DEBUG using Serial not odrv0Serial
-            char c = Serial.read();
+            // char c = Serial.read();
+            char c = odrv0Serial.read();
             // Add the char to our buffer
             msg[msg_idx++] = c;
 
@@ -245,15 +252,14 @@ static THD_FUNCTION(SerialThread, arg) {
  */
 
 void parsePositionMsg(char* msg, int len) {
-    // DEBUG ONLY
+    // only print the message if DEBUG is defined above
 #ifdef DEBUG
     Serial.print("MSG RECEIVED: ");
     for(int i=0; i<len; i++) {
-        Serial.print(msg[i]);
+        Serial << (int)msg[i] << " ";
     }
-    Serial.println();
+    Serial << "\n";
 #endif
-    // end DEBUG only
 
     float m0,m1;
     int result = odrv0Interface.ParseDualPosition(msg, len, m0, m1);
@@ -267,6 +273,10 @@ void parsePositionMsg(char* msg, int len) {
         // Update absolute positions
         odrv0.axis0.abs_pos_estimate = m0 + odrv0.axis0.ENCODER_OFFSET;
         odrv0.axis1.abs_pos_estimate = m1 + odrv0.axis1.ENCODER_OFFSET;
+
+#ifdef DEBUG
+        Serial << "rcv tstamp: " << micros() << "\n";
+#endif
     } else {
         // TODO put a debug flag somewhere, otherwise printing messages like
         // these will probably screw things up
@@ -296,8 +306,8 @@ void chSetup() {
         NORMALPRIO, IdleThread, NULL);
 
     // Control threads
-    // chThdCreateStatic(waPositionControlThread, sizeof(waPositionControlThread),
-    //     NORMALPRIO, PositionControlThread, NULL);
+    chThdCreateStatic(waPositionControlThread, sizeof(waPositionControlThread),
+        NORMALPRIO, PositionControlThread, NULL);
 
     chThdCreateStatic(waSerialThread, sizeof(waSerialThread),
         NORMALPRIO, SerialThread, NULL);

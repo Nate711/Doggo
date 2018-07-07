@@ -11,6 +11,8 @@ static const int kMotorStrideBool = 4;
 static const int kMotorOffsetUint16 = 0;
 static const int kMotorStrideUint16 = 2;
 
+#define DEBUG
+
 // Print with stream operator
 template<class T> inline Print& operator <<(Print &obj,     T arg) { obj.print(arg);    return obj; }
 template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(arg, 4); return obj; }
@@ -35,8 +37,8 @@ int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
         return -1; // error in message length
     } else {
         // retrieve short from byte stream
-        uint16_t m0 = (msg[1] << 8) | msg[0];
-        uint16_t m1 = (msg[3] << 8) | msg[2];
+        uint16_t m0_16 = (msg[1] << 8) | msg[0];
+        uint16_t m1_16 = (msg[3] << 8) | msg[2];
         uint8_t rcvdCheckSum = msg[4];
 
         // compute checksum
@@ -48,16 +50,18 @@ int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
 
         // DEBUG ONLY
 #ifdef DEBUG
-        Serial.print("checksum: ");
-        Serial.println((int)checkSum);
-        Serial.println((int)rcvdCheckSum);
+        Serial << "Comp checksum: " << (int)checkSum << " rcvd: " << (int)rcvdCheckSum << "\n";
 #endif
 
         // check if the check sum matched
         if (checkSum == rcvdCheckSum) {
             // convert to float
-            m0 = (float) ((int16_t) m0);
-            m1 = (float) ((int16_t) m1);
+            m0 = (float) ((int16_t) m0_16);
+            m1 = (float) ((int16_t) m1_16);
+
+#ifdef Debug
+            Serial << "Parsed: " << m0 << "\t" << m1 << "\n";
+#endif
             return 1;
         } else {
             return -1;
