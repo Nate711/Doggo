@@ -142,6 +142,7 @@ static THD_FUNCTION(PrintDebugThread, arg) {
 // PositionControlThread: Motor position control thread
 // Periodically calculates result from PID controller and sends off a new
 // dual current command to the ODrive(s)
+
 // TODO: add support for multiple ODrives
 
 static THD_WORKING_AREA(waPositionControlThread, 128);
@@ -183,7 +184,7 @@ static THD_FUNCTION(PositionControlThread, arg) {
         odrv0Interface.SetDualCurrent(0.0, 0.0);
 #endif
 
-        chThdSleepMicroseconds(10000); // execute at 500Hz approximately
+        chThdSleepMicroseconds(10000); // execute at 100Hz approximately
     }
 }
 
@@ -192,6 +193,7 @@ static THD_FUNCTION(PositionControlThread, arg) {
 // Pulls bytes from the odrv0 serial buffer (aka Serial1) at a rate of 100khz.
 // When a newline char is received, it calls parseEncoderMessage to update the
 // struct associated with the serial buffer.
+
 // TODO: add timeout behavior: throw out buffer if certain time has elapsed since
 // a new message has started being received
 
@@ -208,14 +210,20 @@ static THD_FUNCTION(SerialThread, arg) {
     int msg_idx = 0; // keep track of which index to write to
 
     odrv0Serial.clear();
-    // DEBUG
-    // Serial.clear();
+
+    long msg_start = 0;
+    long msg_end = 0;
+    int loop_iters = 0;
 
     while (true) {
-        // DEBUG ONLY
-        // Use odrv0Serial.available() when running with odrive
-        // while(Serial.available()) {
+        loop_iters++;
         while (odrv0Serial.available()) {
+#ifdef DEBUG
+            if (msg_idx == 0) {
+                msg_start = micros();
+                loop_iters = 0;
+            }
+#endif
             // reset buffer TODO deal with consequences of buffer overflow
             if(msg_idx >= BUFFER_SIZE) {
 #ifdef DEBUG
@@ -224,8 +232,6 @@ static THD_FUNCTION(SerialThread, arg) {
                 msg_idx = 0;
             }
             // Read latest byte out of the serial buffer
-            // DEBUG using Serial not odrv0Serial
-            // char c = Serial.read();
             char c = odrv0Serial.read();
             // Add the char to our buffer
             msg[msg_idx++] = c;
@@ -234,6 +240,13 @@ static THD_FUNCTION(SerialThread, arg) {
             if(c == '\n') {
                 parsePositionMsg(msg,msg_idx);
                 msg_idx = 0;
+
+#ifdef DEBUG
+                msg_end = micros();
+                Serial << "rcvd in: " << msg_end - msg_start << " in " << loop_iters << " loops\n";
+                // NOTE: As of code 7/7/18, the average receive time was 282us
+                // And number of loop executions to get a message was 34
+#endif
             }
         }
         // Run the serial checking loop at 100khz by delaying 10us
@@ -248,6 +261,7 @@ static THD_FUNCTION(SerialThread, arg) {
  * Parse a dual position message and store the result in the odrive struct
  * @param msg char* : message
  * @param len int   : message length
+ * 
  * TODO: make it generalizable to other odrives and other odriveInterfaces
  */
 
@@ -276,6 +290,7 @@ void parsePositionMsg(char* msg, int len) {
 
 #ifdef DEBUG
         Serial << "rcv tstamp: " << micros() << "\n";
+        // NOTE: As of 7/7/18 code, around 1500us from send to receive
 #endif
     } else {
         // TODO put a debug flag somewhere, otherwise printing messages like
@@ -301,7 +316,6 @@ void chSetup() {
     // This is the most important part of the setup
 
     // Idle thread
-
     chThdCreateStatic(waIdleThread, sizeof(waIdleThread),
         NORMALPRIO, IdleThread, NULL);
 
@@ -335,6 +349,7 @@ void setup() {
 
     // Make sure the custom firmware is loaded because the default BAUD is 115200
     odrv0Serial.begin(500000);
+    // TODO: figure out if i should wait for serial available... or some indication the odrive is on
 
     // Start ChibiOS.
     chBegin(chSetup);
