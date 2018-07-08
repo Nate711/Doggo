@@ -41,6 +41,10 @@ public:
     bool run_state(int axis, int requested_state, bool wait);
 private:
     HardwareSerial& serial_;
+    void SendNLLen();
+    void SendStartByte();
+    void SendByte(uint8_t byte);
+    void SendShort(int16_t val);
 };
 
 #endif //ODriveArduino_h
