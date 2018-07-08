@@ -1,6 +1,7 @@
 #include "ChRt.h"
 #include "Arduino.h"
 #include "ODriveArduino.h"
+#include "config.hpp"
 
 #ifndef POSITION_CONTROL_H
 #define POSITION_CONTROL_H
@@ -44,14 +45,12 @@ static THD_FUNCTION(PositionControlThread, arg) {
         // odrv0Interface.SetDualCurrent(tau_alpha, tau_gamma);
 
         latest_send_timestamp = micros();
-#ifdef DEBUG_LOW
-        // DEBUG only: send two zero current commands
-        // NOTE: when odrive is in closed loop position control I doubt
-        // current commands will do anything
-        odrv0Interface.SetDualCurrent(0, 0);
-#endif
 
-        chThdSleepMicroseconds(2000); // execute at 200Hz approximately
+        // DEBUG only: send two zero current commands
+        odrv0Interface.SetDualCurrent(0, 0);
+
+        // The duration of sleep controls the loop frequency
+        chThdSleepMicroseconds(1000000/POSITION_CONTROL_FREQ);
     }
 }
 

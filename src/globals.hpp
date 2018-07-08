@@ -5,11 +5,6 @@
 #include "Arduino.h"
 #include "ODriveArduino.h"
 
-// define debug to enable printing debug messages
-// I've made two flags so you have more options in terms of which messages to show
-#define DEBUG_LOW // for non so important debug messages
-#define DEBUG_HIGH // for more important debug messages
-
 //------------------------------------------------------------------------------
 // Helper utilities
 // Add support for using "<<" to stream stuff to the usb serial
@@ -64,6 +59,15 @@ volatile uint32_t count = 0;
 volatile uint32_t maxDelay = 0;
 
 volatile long latest_send_timestamp = 0;
-volatile long latest_feedback_delay = 0;
+volatile long latest_receive_timestamp = 0;
+
+struct DebugValues {
+    long feedback_loop_time = 0;
+    ODrive& odrv0 = odrv0;
+    ODrive& odrv1 = odrv1;
+    ODrive& odrv2 = odrv2;
+    ODrive& odrv3 = odrv3;
+};
+DebugValues global_debug_values;
 
 #endif

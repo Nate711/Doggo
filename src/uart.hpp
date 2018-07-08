@@ -2,6 +2,8 @@
 #include "Arduino.h"
 #include "ODriveArduino.h"
 #include "globals.hpp"
+#include "config.hpp"
+
 
 #ifndef UART_H
 #define UART_H
@@ -41,9 +43,6 @@ static THD_FUNCTION(SerialThread, arg) {
         while (odrv0Serial.available()) {
             // Read latest byte out of the serial buffer
             char c = odrv0Serial.read();
-// #ifdef DEBUG_LOW
-//             Serial << "b4 char, state, idx, pl len: " << (int)c << " " << rx_state << " " << msg_idx << " " << payload_length << "\n";
-// #endif
             switch (rx_state) {
                 case IDLING:
                     if (c == START_BYTE) {
@@ -106,11 +105,8 @@ static THD_FUNCTION(SerialThread, arg) {
         // Run the serial checking loop at 100khz by delaying 10us
         // chThdSleepMilliseconds(10);
         // TODO: make this interrupt driven?
-        // Yielding here gives other threads a chance to execute
-        // for(int i=0; i < 20; i++) {
-        //     chThdYield();
-        // }
-        chThdSleepMicroseconds(500);
+        // NOTE: using yield instead made the whole teensy crash, not sure why....
+        chThdSleepMicroseconds(1000000/UART_FREQ);
     }
 }
 
@@ -139,13 +135,27 @@ void parsePositionMsg(char* msg, int len) {
         odrv0.axis0.pos_estimate = m0;
         odrv0.axis1.pos_estimate = m1;
 
+#ifdef DEBUG_LOW
+        Serial << "M0,M1 inc: " << m0 << " " << m1 << '\n';
+#endif
+
         // TODO: this calculation of absolute pos is in the wrong function / scope
         // Update absolute positions
         odrv0.axis0.abs_pos_estimate = m0 + odrv0.axis0.ENCODER_OFFSET;
         odrv0.axis1.abs_pos_estimate = m1 + odrv0.axis1.ENCODER_OFFSET;
 
-#ifdef DEBUG_LOW
-        Serial << "receive - send: " << micros() - latest_send_timestamp << "\n";
+        // NOTE: it's possible that the feedback delay is wrong if an old
+        // encoder reading took so long to come back that it came back after
+        // another current command was sent; ie:
+        // 1) Teensy sends command I1
+        // 2) Teensy sends command I2
+        // 3) Teensy receives reading E1
+        // 4) Teensy thinks delay was E1-I2 when in reality it was E1 - I1
+        // This problem won't happen if the delay is short and the control rate is small
+        latest_receive_timestamp = micros();
+        global_debug_values.feedback_loop_time = latest_receive_timestamp - latest_send_timestamp;
+#ifdef DEBUG_HIGH
+        Serial << "Comm loop(uS): " << global_debug_values.feedback_loop_time << "\n";
         // NOTE: As of 7/7/18 code, around 1500us from send to receive
 #endif
     } else {

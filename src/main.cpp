@@ -21,6 +21,8 @@
 #include "globals.hpp"
 #include "uart.hpp"
 #include "position_control.hpp"
+#include "debug.hpp"
+#include "config.hpp"
 
 //------------------------------------------------------------------------------
 // E-STOP function
@@ -93,8 +95,8 @@ void chSetup() {
     // TODO: create gait pattern thread (aka one that coordinates leg by generating leg setpoints)
 
     // Debug threads
-    // chThdCreateStatic(waPrintDebugThread, sizeof(waPrintDebugThread),
-    //     NORMALPRIO, PrintDebugThread, NULL);
+    chThdCreateStatic(waPrintDebugThread, sizeof(waPrintDebugThread),
+        NORMALPRIO, PrintDebugThread, NULL);
 
     chThdCreateStatic(waBlinkThread, sizeof(waBlinkThread),
         NORMALPRIO, BlinkThread, NULL);

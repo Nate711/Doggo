@@ -1,4 +1,3 @@
-
 #include "Arduino.h"
 #include "ODriveArduino.h"
 
@@ -10,8 +9,6 @@ static const int kMotorOffsetBool = 0;
 static const int kMotorStrideBool = 4;
 static const int kMotorOffsetUint16 = 0;
 static const int kMotorStrideUint16 = 2;
-
-#define DEBUG
 
 // Print with stream operator
 template<class T> inline Print& operator <<(Print &obj,     T arg) { obj.print(arg);    return obj; }
@@ -51,9 +48,7 @@ int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
         checkSum ^= msg[4];
 
         // DEBUG ONLY
-        #ifdef DEBUG
-        Serial << "Comp checksum: " << (int)checkSum << " rcvd: " << (int)rcvdCheckSum << "\n";
-        #endif
+        // Serial << "Comp checksum: " << (int)checkSum << " rcvd: " << (int)rcvdCheckSum << "\n";
 
         // check if the check sum matched
         if (checkSum == rcvdCheckSum) {
@@ -61,10 +56,6 @@ int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
             // TODO: figure out if casts are needed
             m0 = (float) ((int16_t) m0_16);
             m1 = (float) ((int16_t) m1_16);
-
-            #ifdef DEBUG
-            Serial << "Parsed: " << m0 << "\t" << m1 << "\n";
-            #endif
             return 1;
         } else {
             return -1;
@@ -116,7 +107,6 @@ void ODriveArduino::SendShort(int16_t val) {
     uint8_t v1 = (val >> 8) & 0xFF;
     SendByte(v0);
     SendByte(v1);
-    Serial << "i: " << v0 << v1<<'\n';
 }
 
 /**
@@ -125,19 +115,17 @@ void ODriveArduino::SendShort(int16_t val) {
  * @param current1 desired current for motor 1
  */
 void ODriveArduino::SetDualCurrent(float current0, float current1) {
-    // Serial  << "Sent: C " << current0 << " " << current1 << "\n";
-    // serial_ << "C " << current0 << " " << current1 << "\n";
-
     // NOTE: Desired current values will be send as their value times 100!
     // Ie, 5.6A => 560
     // The limit to the multiplier is dictated by 32000/maximum amps
     // So if we want 100A maximum value, then the mult could be 320
     const int MULTIPLIER = 100;
-    // constrain the current set points so they dont exceed the limits of int16
+
+    // constrain the current set points so they don't exceed the limits of int16
     current0 = constrain(current0, -30000/MULTIPLIER, 30000/MULTIPLIER);
     current1 = constrain(current1, -30000/MULTIPLIER, 30000/MULTIPLIER);
-    int16_t i0_16 = (int16_t) (current0 * MULTIPLIER);
-    int16_t i1_16 = (int16_t) (current1 * MULTIPLIER);
+    int16_t i0_16 = (current0 * MULTIPLIER);
+    int16_t i1_16 = (current1 * MULTIPLIER);
 
     // Calculate the checksum based on the 2 current value shorts
     uint8_t checkSum = 'C';
