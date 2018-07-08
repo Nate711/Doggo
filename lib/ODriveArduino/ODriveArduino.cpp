@@ -18,6 +18,14 @@ ODriveArduino::ODriveArduino(HardwareSerial& serial)
 : serial_(serial) {}
 
 /**
+ * Send a message to the odrive that tells it to send back the vbus voltage
+ * Working as of 7/7/18
+ */
+void ODriveArduino::QueryVBusVoltage() {
+    SendStartByte(); SendNLLen();
+    serial_ << "r vbus_voltage\n";
+}
+/**
 * Parses the encoder position message and stores positions as counts
 * Assumes the message is in format "<short1><short2><checksum>\n"
 

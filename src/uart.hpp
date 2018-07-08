@@ -17,7 +17,8 @@
 // TODO: add timeout behavior: throw out buffer if certain time has elapsed since
 // a new message has started being received
 
-void parsePositionMsg(char* msg, int len);
+void ProcessPositionMsg(char* msg, int len);
+void ProcessNLMessage(char* msg, size_t len);
 enum RXState { IDLING, READ_LEN, READ_PAYLOAD, READ_PAYLOAD_UNTIL_NL};
 // 128 byte stack beyond task switch and interrupt needs.
 static THD_WORKING_AREA(waSerialThread, 128);
@@ -70,7 +71,10 @@ static THD_FUNCTION(SerialThread, arg) {
                     msg[msg_idx++] = c;
 
                     if (c == '\n') {
-                        parsePositionMsg(msg,msg_idx);
+                        if (msg_idx < BUFFER_SIZE) {
+                            msg[msg_idx] = '\0'; // null terminate to form string
+                            ProcessNLMessage(msg,msg_idx);
+                        }
                         rx_state = IDLING;
                         msg_idx = 0;
                         payload_length = 0;
@@ -86,7 +90,9 @@ static THD_FUNCTION(SerialThread, arg) {
                     msg[msg_idx++] = c;
 
                     if (msg_idx == payload_length) {
-                        parsePositionMsg(msg,msg_idx);
+                        if (msg[0] == 'P') {
+                            ProcessPositionMsg(msg,msg_idx);
+                        }
                         rx_state = IDLING;
                         msg_idx = 0;
                         payload_length = 0;
@@ -117,7 +123,7 @@ static THD_FUNCTION(SerialThread, arg) {
  *
  * TODO: make it generalizable to other odrives and other odriveInterfaces
  */
-void parsePositionMsg(char* msg, int len) {
+void ProcessPositionMsg(char* msg, int len) {
     // only print the message if DEBUG is defined above
 #ifdef DEBUG_LOW
     Serial.print("MSG RECEIVED: ");
@@ -167,3 +173,7 @@ void parsePositionMsg(char* msg, int len) {
     }
 }
 #endif
+
+void ProcessNLMessage(char* msg, size_t len) {
+    Serial << "Received NL message: " << msg;
+}
