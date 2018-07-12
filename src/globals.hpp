@@ -38,7 +38,8 @@ struct ODrive {
 } odrv0, odrv1, odrv2, odrv3;
 
 // ODriveArduino objects
-// These objects are responsible for sending commands to the ODrive
+// These objects are responsible for sending commands to the ODrive over their
+// respective serial port
 ODriveArduino odrv0Interface(odrv0Serial);
 ODriveArduino odrv1Interface(odrv1Serial);
 ODriveArduino odrv2Interface(odrv2Serial);
@@ -47,20 +48,26 @@ ODriveArduino odrv3Interface(odrv3Serial);
 //------------------------------------------------------------------------------
 // Global variables. These are needed for cross-thread communication!!
 
+// Struct to hold PID gains for the legs
 struct LegGain {
     float Kp_theta = 0;
     float Kd_theta = 0;
 
     float Kp_gamma = 0;
     float Kd_gamma = 0;
-} leg0;
+} leg_default;
 
+// Number of idle cycles per second
 volatile uint32_t count = 0;
+// Maximum time between idle cycles
 volatile uint32_t maxDelay = 0;
 
+// The last time (in microseconds) that the Teensy sent a message to an ODrive
 volatile long latest_send_timestamp = 0;
+// The last time (in microseconds) that the Teensy received a message from an ODrive
 volatile long latest_receive_timestamp = 0;
 
+// Struct to hold information helpful for debugging/printing to serial monitor
 struct DebugValues {
     long feedback_loop_time = 0;
     ODrive& odrv0 = odrv0;

@@ -1,19 +1,14 @@
 #include "Arduino.h"
 #include "ODriveArduino.h"
 
-static const int kMotorOffsetFloat = 2;
-static const int kMotorStrideFloat = 28;
-static const int kMotorOffsetInt32 = 0;
-static const int kMotorStrideInt32 = 4;
-static const int kMotorOffsetBool = 0;
-static const int kMotorStrideBool = 4;
-static const int kMotorOffsetUint16 = 0;
-static const int kMotorStrideUint16 = 2;
-
 // Print with stream operator
 template<class T> inline Print& operator <<(Print &obj,     T arg) { obj.print(arg);    return obj; }
 template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(arg, 4); return obj; }
 
+/**
+ * Construct ODriveArduino object linked to the given serial port.
+ * @param serial Serial port to use to communicate to the ODrive
+ */
 ODriveArduino::ODriveArduino(HardwareSerial& serial)
 : serial_(serial) {}
 
@@ -27,19 +22,19 @@ void ODriveArduino::QueryVBusVoltage() {
 }
 /**
 * Parses the encoder position message and stores positions as counts
-* Assumes the message is in format "<short1><short2><checksum>\n"
+* Assumes the message is in format "<1><6><'P'><short1><short2><checksum>"
 
 * TODO: add pll_vel to the message for better motor velocity measurement!!!
 * This would greatly improve the noise on the Kd term!!
-* @param msg   String: Message to parse
-* @param m0    float&: Output parameter for axis0 reading
-* @param m1    float&: Output parameter for axis1 reading
-* @return      int:    1 if success, -1 if failed to find get full message or checksum failed
+* @param msg    String: Message to parse
+* @param m0     float&: Output parameter for axis0 reading
+* @param m1     float&: Output parameter for axis1 reading
+* @return       int:    1 if success, -1 if failed to find get full message or checksum failed
 */
 int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
     // check if 1 byte for "P", 4 bytes holding encoder data, and 1 checksum byte were received
     if (len != 6) {
-        return -1; // error in message length
+        return -1; // return -1 to indicate that the message length was wrong
     } else {
         // retrieve short from byte stream
         // remember that the first character is 'P'
@@ -49,7 +44,7 @@ int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
 
         // compute checksum
         uint8_t checkSum = 0;
-        checkSum ^= msg[0]; // letter "P"
+        checkSum ^= msg[0]; // letter 'P'
         checkSum ^= msg[1];
         checkSum ^= msg[2];
         checkSum ^= msg[3];
@@ -58,7 +53,7 @@ int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
         // DEBUG ONLY
         // Serial << "Comp checksum: " << (int)checkSum << " rcvd: " << (int)rcvdCheckSum << "\n";
 
-        // check if the check sum matched
+        // if the computed and received check sums match then update the motor position variables
         if (checkSum == rcvdCheckSum) {
             // convert to float
             // TODO: figure out if casts are needed
@@ -66,6 +61,7 @@ int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
             m1 = (float) ((int16_t) m1_16);
             return 1;
         } else {
+            // return -1 to indicate that the checksums didn't match
             return -1;
         }
     }
@@ -76,20 +72,20 @@ int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
  * Send the start byte to indicate to the receiver that a new message is being sent
  */
 void ODriveArduino::SendStartByte() {
-    serial_ << (char)1;
+    serial_ << START_BYTE;
 }
 
 /**
  * Send the payload length value (0) that indicates to the receiver to read until a newline is hit
  */
 void ODriveArduino::SendNLLen() {
-    serial_ << (char)0;
+    serial_ << NL_LEN;
 }
 
 /**
- * xor operation on first 8 bits and last 8 bits of a short
- * @param  val : short
- * @return     : byte resulting from xor operation
+ * XOR operation on first 8 bits and last 8 bits of a short
+ * @param  val  The short to work on
+ * @return      Byte resulting from xoring the first 8 and last 8 bits.
  */
 uint8_t XorShort(int16_t val) {
     // bad to duplicate code :(
@@ -100,7 +96,7 @@ uint8_t XorShort(int16_t val) {
 
 /**
  * Send a single byte over serial
- * @param byte : Byte to send
+ * @param byte  Byte to send to the ODrive
  */
 void ODriveArduino::SendByte(uint8_t byte) {
     serial_ << (char) byte;
@@ -108,7 +104,7 @@ void ODriveArduino::SendByte(uint8_t byte) {
 
 /**
  * Send a short (16 bit signed int) over serial
- * @param val : Short to send
+ * @param val   The short to send to the ODrive
  */
 void ODriveArduino::SendShort(int16_t val) {
     uint8_t v0 = val & 0xFF;
@@ -118,9 +114,9 @@ void ODriveArduino::SendShort(int16_t val) {
 }
 
 /**
- * Sends a command in the form "<1><6>C<i0bytes><i1bytes><checksum>".
- * @param current0 desired current for motor 0
- * @param current1 desired current for motor 1
+ * Sends a command for both motor currents in the form "<1><6>C<i0bytes><i1bytes><checksum>".
+ * @param current0      Desired current for motor 0
+ * @param current1      Desired current for motor 1
  */
 void ODriveArduino::SetDualCurrent(float current0, float current1) {
     // NOTE: Desired current values will be send as their value times 100!
@@ -150,45 +146,94 @@ void ODriveArduino::SetDualCurrent(float current0, float current1) {
 }
 
 /**
- * Set current for single axis
- * @param motor_number : axis number (0 or 1)
- * @param current      : float amount of current
+ * Send a current command for single axis
+ * @param motor_number  Axis number (0 or 1)
+ * @param current       Float amount of current
  */
 void ODriveArduino::SetCurrent(int motor_number, float current) {
     SendStartByte(); SendNLLen();
     serial_ << "c " << motor_number << " " << current << "\n";
 }
 
+/**
+ * Sends a position command to the ODrive. Once the ODrive gets this command
+ * then it will use its own PID control to get the motor to that position
+ * @param motor_number  Axis number (0 or 1), Indicate which motor to command
+ * @param position      Desired position in counts
+ */
 void ODriveArduino::SetPosition(int motor_number, float position) {
     SetPosition(motor_number, position, 0.0f, 0.0f);
 }
 
+/**
+ * Sends a position command to the ODrive and set a velocity feedforward gain.
+ * @param motor_number          Axis number (0 or 1), Indicate which motor to command
+ * @param position              Desired position in counts
+ * @param velocity_feedforward  Feed forward term
+ */
 void ODriveArduino::SetPosition(int motor_number, float position, float velocity_feedforward) {
     SetPosition(motor_number, position, velocity_feedforward, 0.0f);
 }
 
+/**
+ * Sends a position command along with velocity feedforward and current feedforward
+ * @param motor_number         Axis number (0 or 1), Indicate which motor to command
+ * @param position             Desired position in counts
+ * @param velocity_feedforward Velocity feed foward
+ * @param current_feedforward  Current feed forward
+ */
 void ODriveArduino::SetPosition(int motor_number, float position, float velocity_feedforward, float current_feedforward) {
     SendStartByte(); SendNLLen();
     serial_ << "p " << motor_number  << " " << position << " " << velocity_feedforward << " " << current_feedforward << "\n";
 }
 
+/**
+ * Sends a velocity command to the ODrive
+ * @param motor_number Axis number (0 or 1)
+ * @param velocity     Desired velocity
+ */
 void ODriveArduino::SetVelocity(int motor_number, float velocity) {
     SetVelocity(motor_number, velocity, 0.0f);
 }
 
+/**
+ * Sends a velocity command to the ODrive with current feedforward
+ * @param motor_number        Axis number (0 or 1)
+ * @param velocity            Desired velocity
+ * @param current_feedforward Current feedfoward
+ */
 void ODriveArduino::SetVelocity(int motor_number, float velocity, float current_feedforward) {
     SendStartByte(); SendNLLen();
     serial_ << "v " << motor_number  << " " << velocity << " " << current_feedforward << "\n";
 }
 
+/**
+ * VERY DUBIOUS / COMPLETELY UNTESTED
+ */
+
+/**
+ * Attempt to read a float sent from the ODrive
+ * @return Parsed float. TODO: handle error
+ */
 float ODriveArduino::readFloat() {
     return readString().toFloat();
 }
 
+/**
+ * Attempt to read an integer sent from the ODrive
+ * @return Parsed integer. TODO: handle error
+ */
 int32_t ODriveArduino::readInt() {
     return readString().toInt();
 }
 
+/**
+ * Command a certain desired state for a given axis
+ * @param  axis            Axis number (0 or 1)
+ * @param  requested_state Desired state, see state ENUM for viable options
+ * @param  wait            Block program until ODrive is back to idle?
+ * @return                 Did ODrive successfully reach desired state?
+ */
 bool ODriveArduino::run_state(int axis, int requested_state, bool wait) {
     int timeout_ctr = 100;
     SendStartByte(); SendNLLen();
@@ -206,6 +251,12 @@ bool ODriveArduino::run_state(int axis, int requested_state, bool wait) {
     return timeout_ctr > 0;
 }
 
+/**
+ * Reads a response from the ODrive. Only works if response ends in a '\n'!!
+ * NOTE: Make sure that the serial thread isn't running concurrently as this function
+ * or else both codes will try to read from the serial port at the same time!
+ * @return Received string
+ */
 String ODriveArduino::readString() {
     String str = "";
     static const unsigned long timeout = 1000;
@@ -219,6 +270,9 @@ String ODriveArduino::readString() {
         char c = serial_.read();
         if (c == '\n') {
             break;
+        }
+        if (c == 0 || c == 1) { // ignore character if its the start byte or length byte
+            continue;
         }
         str += c;
     }

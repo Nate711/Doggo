@@ -1,6 +1,6 @@
 // Extreme Mobility Doggo Code
 
-// Notes from cooperative scheduling ChibiOS example
+// Notes from cooperative scheduling ChibiOS example:
 // This code uses cooperative scheduling. Cooperative scheduling
 // simplifies multitasking since no preemptive context switches occur.
 //
@@ -31,9 +31,11 @@ void ESTOP() {
 }
 
 //------------------------------------------------------------------------------
-// IdleThread: increment a counter and records max delay.
-// The max delay is the maximum time chThdYield takes up. chThdYield tells the
-// OS to run other threads.
+// IdleThread: Increments a counter so we know how many idle cycles we had
+// per second. Also records the maximum time between running the idle thread, ie,
+// the maximum time for which the cpu was doing stuff and didn't get back to the
+// idle thread.
+
 // 64 byte stack beyond task switch and interrupt needs.
 static THD_WORKING_AREA(waIdleThread, 64);
 
@@ -50,7 +52,8 @@ static THD_FUNCTION(IdleThread, arg) {
 }
 
 //------------------------------------------------------------------------------
-// BlinkThread: Blink the built-in led
+// BlinkThread: Blink the built-in led at 1Hz so you know if the Teensy is on.
+
 // 64 byte stack beyond task switch and interrupt needs.
 static THD_WORKING_AREA(waBlinkThread, 64);
 
@@ -67,6 +70,7 @@ static THD_FUNCTION(BlinkThread, arg) {
 
 
 //------------------------------------------------------------------------------
+// chSetup thread. Begins the program threads.
 // Continue setup() after chBegin().
 void chSetup() {
     // Checks to make sure you enabled cooperature scheduling
@@ -80,34 +84,39 @@ void chSetup() {
     // Create ALL the threads!!
     // This is the most important part of the setup
 
-    // Idle thread
+    // Idle thread: increments counter.
     chThdCreateStatic(waIdleThread, sizeof(waIdleThread),
         NORMALPRIO, IdleThread, NULL);
 
-    // Control threads
+    // Control thread: executes PID and controls the motors.
     chThdCreateStatic(waPositionControlThread, sizeof(waPositionControlThread),
         NORMALPRIO, PositionControlThread, NULL);
 
+    // Serial thread: reads any incoming serial messages from ODrives.
     chThdCreateStatic(waSerialThread, sizeof(waSerialThread),
         NORMALPRIO, SerialThread, NULL);
 
     // TODO: add sensor polling thread
     // TODO: create gait pattern thread (aka one that coordinates leg by generating leg setpoints)
 
-    // Debug threads
+    // Debug thread: prints out helpful debugging information to serial monitor
     chThdCreateStatic(waPrintDebugThread, sizeof(waPrintDebugThread),
         NORMALPRIO, PrintDebugThread, NULL);
 
+    // Blink thread: blinks the onboard LED
     chThdCreateStatic(waBlinkThread, sizeof(waBlinkThread),
         NORMALPRIO, BlinkThread, NULL);
 }
 //------------------------------------------------------------------------------
+// Setup thread.
+// Responsible for initializing the serial ports
 void setup() {
     #ifndef __arm__
     Serial.println("Must run on Teensy 3.5");
     while(true){}
     #endif
 
+    // Begin at 115200 BAUD
     Serial.begin(115200);
     // Wait for USB Serial.
     while (!Serial) {}
@@ -122,6 +131,8 @@ void setup() {
     while (true) {} // TODO: what happens if you dont hold here?
 }
 //------------------------------------------------------------------------------
+// Loop thread.
+// Prints the number of idle cycles and maximum delay every 1 second.
 void loop() {
     while (true) {
         Serial << "Idle thd execs, max micros btn idle: \t";

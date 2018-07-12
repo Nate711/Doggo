@@ -46,6 +46,9 @@ private:
     void SendStartByte();
     void SendByte(uint8_t byte);
     void SendShort(int16_t val);
+
+    const char START_BYTE = 1;
+    const char NL_LEN = 0;
 };
 
 #endif //ODriveArduino_h
