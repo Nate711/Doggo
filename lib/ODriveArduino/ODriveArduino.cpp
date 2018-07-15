@@ -182,6 +182,7 @@ void ODriveArduino::SetPosition(int motor_number, float position, float velocity
  * @param velocity_feedforward Velocity feed foward
  * @param current_feedforward  Current feed forward
  */
+
 void ODriveArduino::SetPosition(int motor_number, float position, float velocity_feedforward, float current_feedforward) {
     SendStartByte(); SendNLLen();
     serial_ << "p " << motor_number  << " " << position << " " << velocity_feedforward << " " << current_feedforward << "\n";

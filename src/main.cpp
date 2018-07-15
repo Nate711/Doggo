@@ -123,6 +123,7 @@ void setup() {
 
     // Make sure the custom firmware is loaded because the default BAUD is 115200
     odrv0Serial.begin(500000);
+    odrv1Serial.begin(500000);
     // TODO: figure out if i should wait for serial available... or some indication the odrive is on
 
     // Start ChibiOS.

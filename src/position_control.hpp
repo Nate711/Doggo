@@ -2,6 +2,7 @@
 #include "Arduino.h"
 #include "ODriveArduino.h"
 #include "config.hpp"
+#include "globals.hpp"
 
 #ifndef POSITION_CONTROL_H
 #define POSITION_CONTROL_H
@@ -31,13 +32,18 @@ static THD_FUNCTION(PositionControlThread, arg) {
  * Drives the ODrives in an open-loop, position-control trajectory.
  */
 void ODrivePosControl() {
-    odrv0Interface.SetPosition(0,200);
 
-    float t = millis()/1000;
-    float sp = 2000*sin(2*PI*t); // 1hz sinusoid
-    odrv0Interface.SetPosition(1,sp);
+    float t = millis()/2000.0; //.5hz
+    float sp00 = 1200*sin(2*PI*t+PI/2.0);
+    float sp01 = 1200*sin(2*PI*t);
+    float sp10 = 1200*sin(2*PI*t+3*PI/2.0);
+    float sp11 = 1200*sin(2*PI*t+PI);
+    odrv0Interface.SetPosition(0,sp00);
+    odrv0Interface.SetPosition(1,sp01);
+    odrv1Interface.SetPosition(0,sp10);
+    odrv1Interface.SetPosition(1,sp11);
 
-    chThdSleepMilliseconds(10);
+    chThdSleepMilliseconds(5);
 }
 
 /**
@@ -68,7 +74,7 @@ void CoupledPIDControl() {
     float tau_alpha = tau_theta*0.5 - tau_gamma*0.5;
     float tau_beta = tau_theta*0.5 + tau_gamma*0.5;
     // odrv0Interface.SetDualCurrent(tau_alpha, tau_gamma);
-    
+
     latest_send_timestamp = micros();
 
     // DEBUG only: send two zero current commands
