@@ -34,6 +34,7 @@ static THD_FUNCTION(SerialThread, arg) {
     size_t payload_length = 0;
 
     odrv0Serial.clear();
+    odrv0Serial.clear();
 
     long msg_start = 0;
     long msg_end = 0;
@@ -132,6 +133,9 @@ void ProcessPositionMsg(char* msg, int len) {
     }
     Serial << "\n";
 #endif
+#ifdef DEBUG_HIGH
+    Serial <<  "rcv at: " << micros() << '\n';
+#endif
 
     float m0,m1;
     int result = odrv0Interface.ParseDualPosition(msg, len, m0, m1);
@@ -161,6 +165,7 @@ void ProcessPositionMsg(char* msg, int len) {
         latest_receive_timestamp = micros();
         global_debug_values.feedback_loop_time = latest_receive_timestamp - latest_send_timestamp;
 #ifdef DEBUG_HIGH
+        Serial << "Done prs at: " << micros() << '\n';
         Serial << "Comm loop(uS): " << global_debug_values.feedback_loop_time << "\n";
         // NOTE: As of 7/7/18 code, around 1500us from send to receive
 #endif

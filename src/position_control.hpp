@@ -22,8 +22,8 @@ static THD_FUNCTION(PositionControlThread, arg) {
     (void)arg;
 
     while(true) {
-        // CoupledPIDControl();
-        ODrivePosControl();
+        CoupledPIDControl();
+        // ODrivePosControl();
     }
 }
 
@@ -68,11 +68,17 @@ void CoupledPIDControl() {
     float tau_alpha = tau_theta*0.5 - tau_gamma*0.5;
     float tau_beta = tau_theta*0.5 + tau_gamma*0.5;
     // odrv0Interface.SetDualCurrent(tau_alpha, tau_gamma);
-    
+
     latest_send_timestamp = micros();
 
+#ifdef DEBUG_HIGH
+    Serial << "Sending at: " << micros() << '\n';
+#endif
     // DEBUG only: send two zero current commands
     odrv0Interface.SetDualCurrent(0, 0);
+#ifdef DEBUG_HIGH
+    Serial << "Sent at: " << micros() << '\n';
+#endif
 
     // The duration of sleep controls the loop frequency
     chThdSleepMicroseconds(1000000/POSITION_CONTROL_FREQ);
