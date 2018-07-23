@@ -43,6 +43,11 @@ void ODrivePosControl() {
     odrv1Interface.SetPosition(0,sp10);
     odrv1Interface.SetPosition(1,sp11);
 
+    odrv2Interface.SetPosition(0,sp00);
+    odrv2Interface.SetPosition(1,sp01);
+    odrv3Interface.SetPosition(0,sp10);
+    odrv3Interface.SetPosition(1,sp11);
+
     chThdSleepMilliseconds(5);
 }
 
