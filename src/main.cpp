@@ -21,6 +21,7 @@
 #include "globals.hpp"
 #include "uart.hpp"
 #include "position_control.hpp"
+#include "usb_serial.hpp"
 #include "debug.hpp"
 #include "config.hpp"
 
@@ -99,6 +100,10 @@ void chSetup() {
     // TODO: add sensor polling thread
     // TODO: create gait pattern thread (aka one that coordinates leg by generating leg setpoints)
 
+    // USB Serial Thread: reads any incoming serial messages from the computer
+    chThdCreateStatic(waUSBSerialThread, sizeof(waUSBSerialThread), NORMALPRIO,
+        USBSerialThread, NULL);
+
     // Debug thread: prints out helpful debugging information to serial monitor
     chThdCreateStatic(waPrintDebugThread, sizeof(waPrintDebugThread),
         NORMALPRIO, PrintDebugThread, NULL);
@@ -123,6 +128,9 @@ void setup() {
 
     // Make sure the custom firmware is loaded because the default BAUD is 115200
     odrv0Serial.begin(500000);
+    odrv1Serial.begin(500000);
+    odrv2Serial.begin(500000);
+    odrv3Serial.begin(500000);
     // TODO: figure out if i should wait for serial available... or some indication the odrive is on
 
     // Start ChibiOS.
