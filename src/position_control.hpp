@@ -33,7 +33,7 @@ static THD_FUNCTION(PositionControlThread, arg) {
  */
 void ODrivePosControl() {
 
-    float t = millis()/2000.0; //.5hz
+    float t = millis()/800.0; //.5hz
     float sp00 = 1200*sin(2*PI*t+PI/2.0);
     float sp01 = 1200*sin(2*PI*t);
     float sp10 = 1200*sin(2*PI*t+3*PI/2.0);
@@ -43,10 +43,19 @@ void ODrivePosControl() {
     odrv1Interface.SetPosition(0,sp10);
     odrv1Interface.SetPosition(1,sp11);
 
-    odrv2Interface.SetPosition(0,sp00);
-    odrv2Interface.SetPosition(1,sp01);
-    odrv3Interface.SetPosition(0,sp10);
-    odrv3Interface.SetPosition(1,sp11);
+    // float sp20 = 1200*sin(2*PI*t);
+    // float sp21 = 1200*sin(2*PI*t+PI/2.0);
+    // float sp30 = 1200*sin(2*PI*t+PI);
+    // float sp31 = 1200*sin(2*PI*t+3*PI/2.0);
+    float sp30 = 1200*sin(2*PI*t);
+    float sp31 = 1200*sin(2*PI*t+PI/2.0);
+    float sp20 = 1200*sin(2*PI*t+PI);
+    float sp21 = 1200*sin(2*PI*t+3*PI/2.0);
+
+    odrv2Interface.SetPosition(0,sp20);
+    odrv2Interface.SetPosition(1,sp21);
+    odrv3Interface.SetPosition(0,sp30);
+    odrv3Interface.SetPosition(1,sp31);
 
     chThdSleepMilliseconds(5);
 }
