@@ -21,6 +21,7 @@
 #include "globals.hpp"
 #include "uart.hpp"
 #include "position_control.hpp"
+#include "usb_serial.hpp"
 #include "debug.hpp"
 #include "config.hpp"
 
@@ -98,6 +99,10 @@ void chSetup() {
 
     // TODO: add sensor polling thread
     // TODO: create gait pattern thread (aka one that coordinates leg by generating leg setpoints)
+
+    // USB Serial Thread: reads any incoming serial messages from the computer
+    chThdCreateStatic(waUSBSerialThread, sizeof(waUSBSerialThread), NORMALPRIO,
+        USBSerialThread, NULL);
 
     // Debug thread: prints out helpful debugging information to serial monitor
     chThdCreateStatic(waPrintDebugThread, sizeof(waPrintDebugThread),
