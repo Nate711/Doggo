@@ -80,6 +80,9 @@ void CoupledPIDControl() {
     Serial << "Sent at: " << micros() << '\n';
 #endif
 
+#ifdef PRINT_ONCE
+    chThdSleepMilliseconds(1000000);
+#endif
     // The duration of sleep controls the loop frequency
     chThdSleepMicroseconds(1000000/POSITION_CONTROL_FREQ);
 }
