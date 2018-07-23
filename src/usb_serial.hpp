@@ -13,8 +13,16 @@ static THD_FUNCTION(USBSerialThread, arg) {
 
     while(true) {
       if(Serial.available()) {
-          String msg = Serial.readStringUntil('/n');
+          char c = Serial.read();
           // TODO interpret messages
+          switch(c) {
+              case 'j':
+                  Serial.println("Jump");
+                  break;
+              default:
+                  Serial.println("Unknown command");
+                  break;
+          }
       }
 
       chThdSleepMicroseconds(1000000/USB_SERIAL_FREQ);
