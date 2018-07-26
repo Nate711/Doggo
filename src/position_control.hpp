@@ -23,8 +23,8 @@ static THD_FUNCTION(PositionControlThread, arg) {
     (void)arg;
 
     while(true) {
-        CoupledPIDControl();
-        // ODrivePosControl();
+        // CoupledPIDControl();
+        ODrivePosControl();
     }
 }
 
@@ -33,25 +33,33 @@ static THD_FUNCTION(PositionControlThread, arg) {
  */
 void ODrivePosControl() {
 
-    float t = millis()/800.0; //.5hz
-    float sp00 = 1200*sin(2*PI*t+PI/2.0);
-    float sp01 = 1200*sin(2*PI*t);
-    float sp10 = 1200*sin(2*PI*t+3*PI/2.0);
-    float sp11 = 1200*sin(2*PI*t+PI);
+    float FREQ = 1.0; // hz
+    float AMP = 800.0;
+    float t = millis()/1000.0 * FREQ;
+
+    // Leg 0
+    float sp00 = AMP*sin(2*PI*t);
+    float sp01 = AMP*sin(2*PI*t + PI/2.0);
+
+    // Leg 1
+    float leg1_phase_shift = PI/2.0;
+    float sp10 = AMP*sin(2*PI*t + leg1_phase_shift);
+    float sp11 = AMP*sin(2*PI*t + leg1_phase_shift + PI/2.0);
+
+    // Leg 2
+    const float leg2_phase_shift = PI + PI;
+    float sp30 = AMP*sin(2*PI*t + PI/2.0 + leg2_phase_shift);
+    float sp31 = AMP*sin(2*PI*t + leg2_phase_shift);
+
+    // Leg 3
+    const float leg3_phase_shift = PI/2.0;
+    float sp20 = AMP*sin(2*PI*t + PI/2.0 + leg3_phase_shift);
+    float sp21 = AMP*sin(2*PI*t + leg3_phase_shift);
+
     odrv0Interface.SetPosition(0,sp00);
     odrv0Interface.SetPosition(1,sp01);
     odrv1Interface.SetPosition(0,sp10);
     odrv1Interface.SetPosition(1,sp11);
-
-    // float sp20 = 1200*sin(2*PI*t);
-    // float sp21 = 1200*sin(2*PI*t+PI/2.0);
-    // float sp30 = 1200*sin(2*PI*t+PI);
-    // float sp31 = 1200*sin(2*PI*t+3*PI/2.0);
-    float sp30 = 1200*sin(2*PI*t);
-    float sp31 = 1200*sin(2*PI*t+PI/2.0);
-    float sp20 = 1200*sin(2*PI*t+PI);
-    float sp21 = 1200*sin(2*PI*t+3*PI/2.0);
-
     odrv2Interface.SetPosition(0,sp20);
     odrv2Interface.SetPosition(1,sp21);
     odrv3Interface.SetPosition(0,sp30);
