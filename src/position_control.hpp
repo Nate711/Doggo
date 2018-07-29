@@ -32,7 +32,8 @@ static THD_FUNCTION(PositionControlThread, arg) {
 
     while(true) {
         // CoupledPIDControl();
-        ODrivePosControl();
+        // ODrivePosControl();
+        sinTrajectoryPosControl();
     }
 }
 
@@ -56,7 +57,7 @@ static THD_FUNCTION(PositionControlThread, arg) {
  */
 void HipAngleToEncoderCounts(float alpha, float beta, float sign, float& enc0, float& enc1) {
   // have an if else based on if thetaIndex is 0 or 1 for either theta so just return 1 value and avoid matrix
-  const float enc_offset = PI; // based on initialization
+  const float enc_offset = -PI; // based on initialization
   const float gear_ratio = 3.0;
   enc0 = sign*alpha/(2*PI)*2000.0*gear_ratio;
   enc1 = sign*(beta+enc_offset)/(2*PI)*2000.0*gear_ratio;
@@ -88,16 +89,16 @@ void LegParamsToHipAngles(float L, float theta, float& alpha, float& beta) {
   float L1 = 0.09; // upper leg length (m) what is it actually?
   float L2 = 0.162; // lower leg length (m)
   float gamma = acos((pow(L1,2.0)+pow(L,2.0)-pow(L2,2.0))/(2.0*L1*L));
-  alpha = PI/2.0 + theta - gamma;
-  beta = PI/2.0 + theta + gamma;
+  alpha = theta - gamma;
+  beta = theta + gamma;
 }
 
 /**
  * Converts the leg params L, gamma to cartesian coordinates x, y (in m)
  */
 void LegParamsToCartesian(float L, float theta, float& x, float& y) {
-  x = -L*sin(theta - PI/2.0);
-  y = L*cos(theta - PI/2.0);
+  x = L*cos(theta);
+  y = L*sin(theta);
 }
 
 /**
@@ -105,7 +106,7 @@ void LegParamsToCartesian(float L, float theta, float& x, float& y) {
  */
 void CartesianToLegParams(float x, float y, float& L, float& theta) {
   L = pow((pow(x,2.0) + pow(y,2.0)),0.5);
-  theta = atan(-x/y) + PI/2.0;
+  theta = atan2(y,x);
 }
 
 /**
@@ -115,12 +116,12 @@ void sinTrajectory(float t, float FREQ, float gaitOffset, float stanceHeight, fl
     float gp = fmod((FREQ*t+gaitOffset),1.0); // mod(a,m) returns remainder division of a by m
     if (gp <= flightPercent) {
       x = (gp/flightPercent)*stepLength - stepLength/2.0;
-      y = -upAMP*sin(PI*gp/flightPercent) + stanceHeight;
+      y = upAMP*sin(PI*gp/flightPercent) + stanceHeight;
     }
     else {
       float percentBack = (gp-flightPercent)/(1.0-flightPercent);
       x = -percentBack*stepLength + stepLength/2.0;
-      y = downAMP*sin(PI*percentBack) + stanceHeight;
+      y = -downAMP*sin(PI*percentBack) + stanceHeight;
     }
 }
 
@@ -138,12 +139,14 @@ void CartesianToEncoder(float x, float y, float sign, float& enc0, float& enc1){
  * Drives the ODrives in an open-loop, position-control sinTrajectory.
  */
 void sinTrajectoryPosControl() {
-    const float stanceHeight = 0.2; // Desired height of body from ground during walking (m)
+    // min radius = 0.8
+    // max radius = 0.25
+    const float stanceHeight = 0.18; // Desired height of body from ground during walking (m)
     const float downAMP = 0.03; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
-    const float upAMP = 0.1; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
+    const float upAMP = 0.08; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
     const float flightPercent = 0.25; // Portion of the gait time should be doing the down portion of trajectory
     const float stepLength = 0.1; // Length of entire step (m)
-    const float FREQ = 0.5; // Frequency of one gait cycle (Hz)
+    const float FREQ = 1.0; // Frequency of one gait cycle (Hz)
     const float gaitOffset1 = 0.0; // Phase shift in percent (i.e. 25% shift is 0.25) to be passed in depending on Hip
     float t = millis()/1000.0;
 
@@ -157,9 +160,11 @@ void sinTrajectoryPosControl() {
 
     sinTrajectory(t, FREQ, leg0Offset, stanceHeight, flightPercent, stepLength, upAMP, downAMP, leg0x, leg0y);
     CartesianToEncoder(leg0x, leg0y, sign0, sp00, sp01);
-    odrv0Interface.SetPosition(0,sp00);
-    odrv0Interface.SetPosition(1,sp01);
-
+    odrv0Interface.SetPosition(0,(int)sp00);
+    odrv0Interface.SetPosition(1,(int)sp01);
+    Serial.print(sp00);
+    Serial.print(" ");
+    Serial.println(sp01);
     /*
     odrv1Interface.SetPosition(0,sp10);
     odrv1Interface.SetPosition(1,sp11);
