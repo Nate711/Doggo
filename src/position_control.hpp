@@ -59,8 +59,8 @@ void HipAngleToEncoderCounts(float alpha, float beta, float sign, float& enc0, f
   // have an if else based on if thetaIndex is 0 or 1 for either theta so just return 1 value and avoid matrix
   const float enc_offset = -PI; // based on initialization
   const float gear_ratio = 3.0;
-  enc0 = sign*alpha/(2*PI)*2000.0*gear_ratio;
-  enc1 = sign*(beta+enc_offset)/(2*PI)*2000.0*gear_ratio;
+  enc0 = sign * alpha/ (2*PI) * 2000.0 * gear_ratio;
+  enc1 = sign * (beta + enc_offset) / (2*PI) * 2000.0 * gear_ratio;
 }
 
 /**
@@ -88,25 +88,43 @@ void HipAngleToCartesian(float alpha, float beta, float& x, float& y) {
 void LegParamsToHipAngles(float L, float theta, float& alpha, float& beta) {
   float L1 = 0.09; // upper leg length (m) what is it actually?
   float L2 = 0.162; // lower leg length (m)
-  float gamma = acos((pow(L1,2.0)+pow(L,2.0)-pow(L2,2.0))/(2.0*L1*L));
+  float cos_param = (pow(L1,2.0) + pow(L,2.0) - pow(L2,2.0)) /
+                     (2.0*L1*L);
+  float gamma;
+  if (cos_param < -1.0) {
+    gamma = PI;
+#ifdef DEBUG_HIGH
+    Serial.println("ERROR: L is too small to find valid alpha and beta!");
+#endif
+  } else if (cos_param > 1.0) {
+    gamma = 0;
+#ifdef DEBUG_HIGH
+    Serial.println("ERROR: L is too large to find valid alpha and beta!");
+#endif
+  } else {
+    gamma = acos(cos_param);
+  }
   alpha = theta - gamma;
   beta = theta + gamma;
 }
 
 /**
  * Converts the leg params L, gamma to cartesian coordinates x, y (in m)
+ * Set x_direction to 1.0 or -1.0 to change which direction the leg walks
  */
-void LegParamsToCartesian(float L, float theta, float& x, float& y) {
-  x = L*cos(theta);
-  y = L*sin(theta);
+void LegParamsToCartesian(float L, float theta, float leg_direction, float& x, float& y) {
+  x = leg_direction * L * cos(theta);
+  y = L * sin(theta);
 }
 
 /**
  * Converts the cartesian coords x, y (m) to leg params L (m), gamma (rad)
  */
-void CartesianToLegParams(float x, float y, float& L, float& theta) {
-  L = pow((pow(x,2.0) + pow(y,2.0)),0.5);
-  theta = atan2(y,x);
+void CartesianToLegParams(float x, float y, float leg_direction, float& L, float& theta) {
+  L = pow(
+        (pow(x,2.0) + pow(y,2.0))
+        ,0.5);
+  theta = atan2(y,leg_direction * x);
 }
 
 /**
@@ -116,23 +134,46 @@ void sinTrajectory(float t, float FREQ, float gaitOffset, float stanceHeight, fl
     float gp = fmod((FREQ*t+gaitOffset),1.0); // mod(a,m) returns remainder division of a by m
     if (gp <= flightPercent) {
       x = (gp/flightPercent)*stepLength - stepLength/2.0;
-      y = upAMP*sin(PI*gp/flightPercent) + stanceHeight;
+      y = -upAMP*sin(PI*gp/flightPercent) + stanceHeight;
     }
     else {
       float percentBack = (gp-flightPercent)/(1.0-flightPercent);
       x = -percentBack*stepLength + stepLength/2.0;
-      y = -downAMP*sin(PI*percentBack) + stanceHeight;
+      y = downAMP*sin(PI*percentBack) + stanceHeight;
     }
 }
 
-void CartesianToEncoder(float x, float y, float sign, float& enc0, float& enc1){
+void CartesianToEncoder(float x, float y, float leg_direction, float enc_sign, float& enc0, float& enc1){
   float L = 0.0;
   float theta = 0.0;
-  CartesianToLegParams(x, y, L, theta);
+  CartesianToLegParams(x, y, leg_direction, L, theta);
   float alpha = 0.0;
   float beta = 0.0;
   LegParamsToHipAngles(L, theta, alpha, beta);
-  HipAngleToEncoderCounts(alpha, beta, sign, enc0, enc1);
+  HipAngleToEncoderCounts(alpha, beta, enc_sign, enc0, enc1);
+
+  Serial.print(x,4);
+  Serial.print(" ");
+  Serial.print(y,4);
+  Serial.print(" ");
+  Serial.print(L);
+  Serial.print(" ");
+  Serial.print(theta);
+  Serial.println();
+}
+
+void MoveLeg(ODriveArduino& odrive,
+            float t, float FREQ, float gait_offset, float stanceHeight,
+            float flightPercent, float stepLength, float upAMP, float downAMP,
+            float leg_direction, float sign) {
+  float enc0;
+  float enc1;
+  float x; // float x for leg 0 to be set by the sin trajectory
+  float y;
+  sinTrajectory(t, FREQ, gait_offset, stanceHeight, flightPercent, stepLength, upAMP, downAMP, x, y);
+  CartesianToEncoder(x, y, leg_direction, sign, enc0, enc1);
+  odrive.SetPosition(0,(int)enc0);
+  odrive.SetPosition(1,(int)enc1);
 }
 
 /**
@@ -141,38 +182,42 @@ void CartesianToEncoder(float x, float y, float sign, float& enc0, float& enc1){
 void sinTrajectoryPosControl() {
     // min radius = 0.8
     // max radius = 0.25
-    const float stanceHeight = 0.18; // Desired height of body from ground during walking (m)
-    const float downAMP = 0.03; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
-    const float upAMP = 0.08; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
-    const float flightPercent = 0.25; // Portion of the gait time should be doing the down portion of trajectory
-    const float stepLength = 0.1; // Length of entire step (m)
-    const float FREQ = 1.0; // Frequency of one gait cycle (Hz)
+    const float stanceHeight = 0.15; // Desired height of body from ground during walking (m)
+    const float downAMP = 0.01; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
+    const float upAMP = 0.07; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
+    const float flightPercent = 0.10; // Portion of the gait time should be doing the down portion of trajectory
+    const float stepLength = 0.08; // Length of entire step (m)
+    const float FREQ = 0.6; // Frequency of one gait cycle (Hz)
     const float gaitOffset1 = 0.0; // Phase shift in percent (i.e. 25% shift is 0.25) to be passed in depending on Hip
     float t = millis()/1000.0;
 
-    // Leg 0 // TODO figure out how we want the variables for the sinTrajectory
-    const float leg0Offset = 0.0; // phase shift for the trajectory for this leg
-    const float sign0 = 1.0; // set this to -1.0 if the encoder count is opposite what it should be.
-    float sp00 = 0.0;
-    float sp01 = 0.0;
-    float leg0x = 0.0; // float x for leg 0 to be set by the sin trajectory
-    float leg0y = 0.0;
+    const float leg0_offset = 0.0;
+    const float leg0_sign = -1.0;
+    const float leg0_direction = -1.0;
+    MoveLeg(odrv0Interface, t, FREQ, leg0_offset, stanceHeight,
+            flightPercent, stepLength, upAMP, downAMP,
+            leg0_direction, leg0_sign);
 
-    sinTrajectory(t, FREQ, leg0Offset, stanceHeight, flightPercent, stepLength, upAMP, downAMP, leg0x, leg0y);
-    CartesianToEncoder(leg0x, leg0y, sign0, sp00, sp01);
-    odrv0Interface.SetPosition(0,(int)sp00);
-    odrv0Interface.SetPosition(1,(int)sp01);
-    Serial.print(sp00);
-    Serial.print(" ");
-    Serial.println(sp01);
-    /*
-    odrv1Interface.SetPosition(0,sp10);
-    odrv1Interface.SetPosition(1,sp11);
-    odrv2Interface.SetPosition(0,sp20);
-    odrv2Interface.SetPosition(1,sp21);
-    odrv3Interface.SetPosition(0,sp30);
-    odrv3Interface.SetPosition(1,sp31);
-    */
+    const float leg1_offset = 0.25;
+    const float leg1_sign = -1.0;
+    const float leg1_direction = -1.0;
+    MoveLeg(odrv1Interface, t, FREQ, leg1_offset, stanceHeight,
+            flightPercent, stepLength, upAMP, downAMP,
+            leg1_direction, leg1_sign);
+
+    const float leg2_offset = 0.75;
+    const float leg2_sign = -1.0;
+    const float leg2_direction = 1.0;
+    MoveLeg(odrv2Interface, t, FREQ, leg2_offset, stanceHeight,
+            flightPercent, stepLength, upAMP, downAMP,
+            leg2_direction, leg2_sign);
+
+    const float leg3_offset = 0.5;
+    const float leg3_sign = -1.0;
+    const float leg3_direction = 1.0;
+    MoveLeg(odrv3Interface, t, FREQ, leg3_offset, stanceHeight,
+            flightPercent, stepLength, upAMP, downAMP,
+            leg3_direction, leg3_sign);
 }
 
 /**
