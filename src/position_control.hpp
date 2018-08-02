@@ -157,10 +157,10 @@ void CartesianToEncoder(float x, float y, float leg_direction, float enc_sign,
     Serial.print(" ");
     Serial.print(y,4);
     Serial.print(" ");
-    Serial.print(L);
-    Serial.print(" ");
-    Serial.print(theta);
-    Serial.println();
+    // Serial.print(L);
+    // Serial.print(" ");
+    // Serial.print(theta);
+    // Serial.println();
 }
 
 void MoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offset,
@@ -183,13 +183,16 @@ void sinTrajectoryPosControl() {
     // min radius = 0.8
     // max radius = 0.25
     const float stanceHeight = 0.15; // Desired height of body from ground during walking (m)
-    const float downAMP = 0.01; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
+    const float downAMP = 0.0; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
     const float upAMP = 0.07; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
-    const float flightPercent = 0.10; // Portion of the gait time should be doing the down portion of trajectory
+    const float flightPercent = 0.2; // Portion of the gait time should be doing the down portion of trajectory
     const float stepLength = 0.08; // Length of entire step (m)
-    const float FREQ = 0.6; // Frequency of one gait cycle (Hz)
+    const float FREQ = 1.0; // Frequency of one gait cycle (Hz)
     const float gaitOffset1 = 0.0; // Phase shift in percent (i.e. 25% shift is 0.25) to be passed in depending on Hip
     float t = millis()/1000.0;
+
+    Serial.print(t);
+    Serial.print(" ");
 
     const float leg0_offset = 0.0;
     const float leg0_sign = -1.0;
@@ -218,6 +221,7 @@ void sinTrajectoryPosControl() {
     MoveLeg(odrv3Interface, t, FREQ, leg3_offset, stanceHeight,
         flightPercent, stepLength, upAMP, downAMP,
         leg3_direction, leg3_sign);
+    Serial.println();
 }
 
 /**
