@@ -22,6 +22,7 @@ public:
 
     // Commands
     void SetDualCurrent(float current0, float current1);
+    void SetCoupledPosition(float theta, float gamma);
     void SetCurrent(int motor_number, float current);
     void SetPosition(int motor_number, float position);
     void SetPosition(int motor_number, float position, float velocity_feedforward);
