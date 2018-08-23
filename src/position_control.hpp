@@ -12,9 +12,11 @@ void ODrivePosControl();
 void HipAngleToEncoderCounts(float alpha, float beta, float& enc1, float& enc2);
 void EncoderCountsToHipAngle(float enc1, float enc2, float& alpha, float& beta);
 void HipAngleToCartesian(float alpha, float beta, float& x, float& y);
+void getGamma(float L, float theta, float& gamma);
 void LegParamsToHipAngles(float L, float theta, float& alpha, float& beta);
 void LegParamsToCartesian(float L, float theta, float& x, float& y);
 void CartesianToLegParams(float x, float y, float leg_direction, float& L, float& theta);
+void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, float& gamma);
 void sinTrajectory(float t, float FREQ, float gaitOffset, float stanceHeight, float flightPercent, float stepLength, float upAMP, float downAMP, float& x, float& y);
 void CartesianToEncoder(float x, float y, float leg_direction, float sign, float& enc0, float& enc1);
 void MoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offset, float stanceHeight, float flightPercent, float stepLength, float upAMP, float downAMP, float leg_direction, float sign);
@@ -84,26 +86,33 @@ void HipAngleToCartesian(float alpha, float beta, float& x, float& y) {
 }
 
 /**
-* Converts the two Hip angles (in radians) for a leg into the Hip angles alpha, beta (in rads)
+* Takes the leg parameters and returns the gamma angle (rad) of the legs
 */
-void LegParamsToHipAngles(float L, float theta, float& alpha, float& beta) {
+void getGamma(float L, float theta, float& gamma) {
     float L1 = 0.09; // upper leg length (m) what is it actually?
     float L2 = 0.162; // lower leg length (m)
     float cos_param = (pow(L1,2.0) + pow(L,2.0) - pow(L2,2.0)) / (2.0*L1*L);
-    float gamma;
     if (cos_param < -1.0) {
         gamma = PI;
         #ifdef DEBUG_HIGH
         Serial.println("ERROR: L is too small to find valid alpha and beta!");
         #endif
-    } else if (cos_param > 1.0) {
+      } else if (cos_param > 1.0) {
         gamma = 0;
         #ifdef DEBUG_HIGH
         Serial.println("ERROR: L is too large to find valid alpha and beta!");
         #endif
-    } else {
+      } else {
         gamma = acos(cos_param);
-    }
+      }
+}
+
+/**
+* Converts the two Hip angles (in radians) for a leg into the Hip angles alpha, beta (in rads)
+*/
+void LegParamsToHipAngles(float L, float theta, float& alpha, float& beta) {
+    float gamma;
+    getGamma(L, theta, gamma);
     alpha = theta - gamma;
     beta = theta + gamma;
 }
@@ -118,7 +127,7 @@ void LegParamsToCartesian(float L, float theta, float leg_direction, float& x, f
 }
 
 /**
-* Converts the cartesian coords x, y (m) to leg params L (m), gamma (rad)
+* Converts the cartesian coords x, y (m) to leg params L (m), theta (rad)
 */
 void CartesianToLegParams(float x, float y, float leg_direction, float& L, float& theta) {
     L = pow( (pow(x,2.0) + pow(y,2.0)) ,0.5);
@@ -163,6 +172,12 @@ void CartesianToEncoder(float x, float y, float leg_direction, float enc_sign,
     // Serial.println();
 }
 
+void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, float& gamma) {
+    float L = 0.0;
+    CartesianToLegParams(x, y, leg_direction, L, theta);
+    getGamma(L, theta, gamma);
+}
+
 void MoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offset,
              float stanceHeight, float flightPercent, float stepLength,
              float upAMP, float downAMP, float leg_direction, float sign) {
@@ -174,6 +189,18 @@ void MoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offset,
     CartesianToEncoder(x, y, leg_direction, sign, enc0, enc1);
     odrive.SetPosition(0,(int)enc0);
     odrive.SetPosition(1,(int)enc1);
+}
+
+void CoupledMoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offset,
+             float stanceHeight, float flightPercent, float stepLength,
+             float upAMP, float downAMP, float leg_direction, float sign) {
+    float theta;
+    float gamma;
+    float x; // float x for leg 0 to be set by the sin trajectory
+    float y;
+    sinTrajectory(t, FREQ, gait_offset, stanceHeight, flightPercent, stepLength, upAMP, downAMP, x, y);
+    CartesianToThetaGamma(x, y, leg_direction, theta, gamma);
+    odrive.SetCoupledPosition(theta, gamma);
 }
 
 /**

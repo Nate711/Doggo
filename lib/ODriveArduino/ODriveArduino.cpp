@@ -152,8 +152,10 @@ void ODriveArduino::SetDualCurrent(float current0, float current1) {
  */
 void ODriveArduino::SetCoupledPosition(float theta, float gamma) {
 
-    int16_t theta_16 = theta;
-    int16_t gamma_16 = gamma;
+    const int MULTIPLIER = 1000;
+
+    int16_t theta_16 = (theta * MULTIPLIER);
+    int16_t gamma_16 = (gamma * MULTIPLIER);
 
     // Calculate the checksum based on the 2 current value shorts
     uint8_t checkSum = 'D';
