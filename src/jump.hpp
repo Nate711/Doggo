@@ -20,17 +20,21 @@ void MoveLegJump(ODriveArduino& odrive, float t, float launchTime,
 */
 void TrajectoryPosControlJump() {
 
+  Serial.println("Jump Initialized");
+
   // min radius = 0.8
   // max radius = 0.25
-  float t = millis()/1000.0;
-  const float launchTime = 0.1;
+  const float launchTime = 5 ;
   const float stanceHeight = 0.05; // Desired height of body from ground prior to jump (m)
   const float downAMP = 0.1; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
 
   bool hasCompletedJump = false;
   while(!hasCompletedJump) {
+    Serial.println("Jump Incomplete");
+    float t = millis()/1000.0;
     if (t>launchTime) {
       hasCompletedJump = true;
+      Serial.println("Jump Complete");
     }
     Serial.print(t);
     Serial.print(" ");
@@ -70,14 +74,13 @@ void TrajectoryJump (float t, float launchTime, float stanceHeight,
     //Need to check if n works
     float n = t/launchTime;
     x = 0;
-    y = downAMP*n+ stanceHeight;
+    y = downAMP*n + stanceHeight;
+    Serial.print(String(y));
     //y = downAMP*sin(PI/4 + PI/4*n) + stanceHeight;
 
     /*
-    downAmp*sin(pi/4) + stanceHeight
-
-    end at
-    downamp + stanceheight
+    downAmp*sin(pi/4) + stanceHeight //start
+    downamp + stanceheight //end
     */
   }
 

@@ -34,7 +34,9 @@ static THD_FUNCTION(PositionControlThread, arg) {
     while(true) {
         // CoupledPIDControl();
         // ODrivePosControl();
-        sinTrajectoryPosControl();
+        //sinTrajectoryPosControl();
+        chThdSleepMilliseconds(10);
+
     }
 }
 

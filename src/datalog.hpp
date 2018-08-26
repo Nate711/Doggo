@@ -68,6 +68,7 @@ static THD_FUNCTION(DatalogThread, arg) {
     //Read IMU DATA
     if (myIMU.dataAvailable() == true)
     {
+      Serial.println("Step1");
       //Get quaternion data
       float quatI = myIMU.getQuatI();
       float quatJ = myIMU.getQuatJ();
@@ -89,6 +90,7 @@ static THD_FUNCTION(DatalogThread, arg) {
     	else
     	pitch = asin(sinp);
 
+      Serial.println("Step2");
     	// yaw (z-axis rotation)
     	double siny = +2.0 * (quatReal * quatK + quatI * quatJ);
     	double cosy = +1.0 - 2.0 * (quatJ * quatJ + quatK * quatK);
@@ -102,6 +104,7 @@ static THD_FUNCTION(DatalogThread, arg) {
     //Print to Serial monitor
     Serial.println(dataString);
 
+    Serial.println("Step3");
     //If the file is available, write to it
     if (dataFile) {
       dataFile.println(dataString);
@@ -114,6 +117,8 @@ static THD_FUNCTION(DatalogThread, arg) {
       //print error if file isn't available
       Serial.println("error opening");
     }
+
+    Serial.println("Step4");
 
     //long now = micros();
     chThdSleepMicroseconds(1000000/DATALOG_FREQ);
