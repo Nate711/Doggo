@@ -111,6 +111,10 @@ void chSetup() {
     // Blink thread: blinks the onboard LED
     chThdCreateStatic(waBlinkThread, sizeof(waBlinkThread),
         NORMALPRIO, BlinkThread, NULL);
+
+    // Blink thread: blinks the onboard LED
+    chThdCreateStatic(waDatalogThread, sizeof(waDatalogThread),
+        NORMALPRIO, DatalogThread, NULL);
 }
 //------------------------------------------------------------------------------
 // Setup thread.

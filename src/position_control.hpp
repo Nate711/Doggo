@@ -224,6 +224,7 @@ void sinTrajectoryPosControl() {
     Serial.println();
 }
 
+
 /**
 * Drives the ODrives in an open-loop, position-control trajectory.
 */
