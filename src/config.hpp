@@ -12,5 +12,6 @@ const int POSITION_CONTROL_FREQ = 100;
 const int DEBUG_PRINT_FREQ = 100;
 const int UART_FREQ = 20000;
 const int USB_SERIAL_FREQ = 10;
+const int DATALOG_FREQ = 100;
 
 #endif

@@ -5,14 +5,14 @@
 #include "globals.hpp"
 #include "position_control.hpp"
 
-#ifndef POSITION_CONTROL_H
-#define POSITION_CONTROL_H
+#ifndef JUMP_H
+#define JUMP_H
 
-void TragectoryJump();
+void TragectoryJump(float t, float launchTime, float stanceHeight,
+   float downAMP, float& x, float& y);
 void TrajectoryPosControlJump();
-void MoveLegJump(ODriveArduino& odrive, float t, float FREQ, float gait_offset,
-  float stanceHeight, float flightPercent, float stepLength,
-  float upAMP, float downAMP, float leg_direction, float sign);
+void MoveLegJump(ODriveArduino& odrive, float t, float launchTime,
+  float stanceHeight, float downAMP, float leg_direction, float sign);
 
 
 /**
@@ -23,7 +23,7 @@ void TrajectoryPosControlJump() {
   // min radius = 0.8
   // max radius = 0.25
   float t = millis()/1000.0;
-  const float launchTime = 2.0;
+  const float launchTime = 0.1;
   const float stanceHeight = 0.05; // Desired height of body from ground prior to jump (m)
   const float downAMP = 0.1; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
 
@@ -68,11 +68,18 @@ void TrajectoryPosControlJump() {
 void TrajectoryJump (float t, float launchTime, float stanceHeight,
    float downAMP, float& x, float& y) {
     //Need to check if n works
-    n = t/launchTime;
+    float n = t/launchTime;
     x = 0;
-    y = downAMP*sin(PI/4 + PI/4*n) + stanceHeight;
-  }
+    y = downAMP*n+ stanceHeight;
+    //y = downAMP*sin(PI/4 + PI/4*n) + stanceHeight;
 
+    /*
+    downAmp*sin(pi/4) + stanceHeight
+
+    end at
+    downamp + stanceheight
+    */
+  }
 
 void MoveLegJump(ODriveArduino& odrive, float t, float launchTime,
   float stanceHeight, float downAMP, float leg_direction, float sign) {
@@ -85,3 +92,4 @@ void MoveLegJump(ODriveArduino& odrive, float t, float launchTime,
     odrive.SetPosition(0,(int)enc0);
     odrive.SetPosition(1,(int)enc1);
   }
+#endif

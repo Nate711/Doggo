@@ -77,12 +77,13 @@ static THD_FUNCTION(DatalogThread, arg) {
 
       //Transform Quat to Euler angles
       // roll (x-axis rotation)
-    	double sinr = +2.0 * (quatReal * quatI + quatJ * quatK;
-    	double cosr = +1.0 - 2.0 * (quatI * quatI + quatJ * quatJ;
-    	roll = atan2(sinr, cosr);
+    	double sinr = +2.0 * (quatReal * quatI + quatJ * quatK);
+    	double cosr = +1.0 - 2.0 * (quatI * quatI + quatJ * quatJ);
+    	float roll = atan2(sinr, cosr);
 
     	// pitch (y-axis rotation)
     	double sinp = +2.0 * (quatReal * quatJ - quatK * quatI);
+      float pitch;
     	if (fabs(sinp) >= 1)
     		pitch = copysign(M_PI / 2, sinp); // use 90 degrees if out of range
     	else
@@ -91,15 +92,15 @@ static THD_FUNCTION(DatalogThread, arg) {
     	// yaw (z-axis rotation)
     	double siny = +2.0 * (quatReal * quatK + quatI * quatJ);
     	double cosy = +1.0 - 2.0 * (quatJ * quatJ + quatK * quatK);
-    	yaw = atan2(siny, cosy);
+    	float yaw = atan2(siny, cosy);
 
-      dataString += roll + ", " + pitch + ", " + yaw;
+      dataString += String(roll) + ", " + String(pitch) + ", " + String(yaw);
 
+      Serial.println(quatRadianAccuracy);
     }
 
     //Print to Serial monitor
     Serial.println(dataString);
-    Serial.println(quatRadianAccuracy);
 
     //If the file is available, write to it
     if (dataFile) {
@@ -121,25 +122,3 @@ static THD_FUNCTION(DatalogThread, arg) {
 }
 
 #endif
-
-
-
-
-
-
-
-/**
-
-ALSO:
-//in main
-
-    // Blink thread: blinks the onboard LED
-    chThdCreateStatic(waDatalogThread, sizeof(waDatalogThread),
-        NORMALPRIO, DatalogThread, NULL);
-
-
-
-//in main top
-
-#include "datalog.hpp"
-*/
