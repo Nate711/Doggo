@@ -18,7 +18,7 @@ static THD_FUNCTION(USBSerialThread, arg) {
           // TODO interpret messages
           switch(c) {
               case 'j':
-                  TrajectoryPosControlJump();
+                  TrajectoryPosControlJump(millis()/1000.0f);
                   Serial.println("Jump");
                   break;
               default:
