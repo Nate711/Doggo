@@ -171,6 +171,42 @@ void ODriveArduino::SetCoupledPosition(float theta, float gamma) {
     SendByte(checkSum);
 }
 
+void ODriveArduino::SetCoupledPosition(float sp_theta, float kp_theta, float kd_theta,
+     float sp_gamma, float kp_gamma, float kd_gamma) {
+
+    const int POS_MULTIPLIER = 1000;
+    const int GAIN_MULTIPLIER = 100;
+
+    int16_t sp_theta_16 = (sp_theta * POS_MULTIPLIER);
+    int16_t kp_theta_16 = (kp_theta * GAIN_MULTIPLIER);
+    int16_t kd_theta_16 = (kd_theta * GAIN_MULTIPLIER);
+
+    int16_t sp_gamma_16 = (sp_gamma * POS_MULTIPLIER);
+    int16_t kp_gamma_16 = (kp_gamma * GAIN_MULTIPLIER);
+    int16_t kd_gamma_16 = (kd_gamma * GAIN_MULTIPLIER);
+
+    // Calculate the checksum based on the 2 current value shorts
+    uint8_t checkSum = 'S';
+    checkSum ^= XorShort(sp_theta_16);
+    checkSum ^= XorShort(kp_theta_16);
+    checkSum ^= XorShort(kd_theta_16);
+    checkSum ^= XorShort(sp_gamma_16);
+    checkSum ^= XorShort(kp_gamma_16);
+    checkSum ^= XorShort(kd_gamma_16);
+
+    // Send off bytes
+    SendStartByte(); // send start byte
+    SendByte(14); // payload length
+    SendByte('S'); // dual current command
+    SendShort(sp_theta_16);
+    SendShort(kp_theta_16);
+    SendShort(kd_theta_16);
+    SendShort(sp_gamma_16);
+    SendShort(kp_gamma_16);
+    SendShort(kd_gamma_16);
+    SendByte(checkSum);
+}
+
 /**
  * Send a current command for single axis
  * @param motor_number  Axis number (0 or 1)

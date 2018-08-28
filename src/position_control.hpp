@@ -20,6 +20,7 @@ void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, 
 void sinTrajectory(float t, float FREQ, float gaitOffset, float stanceHeight, float flightPercent, float stepLength, float upAMP, float downAMP, float& x, float& y);
 void CartesianToEncoder(float x, float y, float leg_direction, float sign, float& enc0, float& enc1);
 void MoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offset, float stanceHeight, float flightPercent, float stepLength, float upAMP, float downAMP, float leg_direction, float sign);
+void CoupledMoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offset, float stanceHeight, float flightPercent, float stepLength, float upAMP, float downAMP, float leg_direction, float sign);
 void sinTrajectoryPosControl();
 //------------------------------------------------------------------------------
 // PositionControlThread: Motor position control thread
@@ -36,7 +37,26 @@ static THD_FUNCTION(PositionControlThread, arg) {
     while(true) {
         // CoupledPIDControl();
         // ODrivePosControl();
-        sinTrajectoryPosControl();
+        // sinTrajectoryPosControl();
+        //odrv1Interface.SetCoupledPosition(PI / 4.0 * sin(millis() /2000.0 * PI) + PI / 2.0, PI / 4.0 * sin(millis() /2000.0 * PI+PI/2.0)+PI/3.0);
+
+        const float stanceHeight = 0.15; // Desired height of body from ground during walking (m)
+        const float downAMP = 0.0; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
+        const float upAMP = 0.07; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
+        const float flightPercent = 0.2; // Portion of the gait time should be doing the down portion of trajectory
+        const float stepLength = 0.12; // Length of entire step (m)
+        const float FREQ = 1.0; // Frequency of one gait cycle (Hz)
+        const float gaitOffset1 = 0.0; // Phase shift in percent (i.e. 25% shift is 0.25) to be passed in depending on Hip
+        float t = millis()/1000.0;
+
+        const float leg1_offset = 0.25;
+        const float leg1_sign = 1.0;
+        const float leg1_direction = 1.0;
+        CoupledMoveLeg(odrv1Interface, t, FREQ, leg1_offset, stanceHeight,
+            flightPercent, stepLength, upAMP, downAMP,
+            leg1_direction, leg1_sign);
+
+        chThdSleepMicroseconds(1000000/POSITION_CONTROL_FREQ);
     }
 }
 
@@ -131,7 +151,7 @@ void LegParamsToCartesian(float L, float theta, float leg_direction, float& x, f
 */
 void CartesianToLegParams(float x, float y, float leg_direction, float& L, float& theta) {
     L = pow( (pow(x,2.0) + pow(y,2.0)) ,0.5);
-    theta = atan2(y,leg_direction * x);
+    theta = atan2(leg_direction * x, y);
 }
 
 /**
@@ -176,6 +196,10 @@ void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, 
     float L = 0.0;
     CartesianToLegParams(x, y, leg_direction, L, theta);
     getGamma(L, theta, gamma);
+    Serial.print(theta);
+    Serial.print(" ");
+    Serial.print(gamma);
+    Serial.print('\n');
 }
 
 void MoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offset,
@@ -200,7 +224,7 @@ void CoupledMoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offse
     float y;
     sinTrajectory(t, FREQ, gait_offset, stanceHeight, flightPercent, stepLength, upAMP, downAMP, x, y);
     CartesianToThetaGamma(x, y, leg_direction, theta, gamma);
-    odrive.SetCoupledPosition(theta, gamma);
+    odrive.SetCoupledPosition(theta, 38.2, 0.48, gamma, 20, 0.48);
 }
 
 /**
