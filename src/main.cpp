@@ -20,7 +20,7 @@
 #include "ODriveArduino.h"
 #include "globals.hpp"
 #include "uart.hpp"
-#include "position_control.hpp"
+#include "position_control.h"
 #include "usb_serial.hpp"
 #include "debug.hpp"
 #include "config.hpp"

@@ -8,7 +8,7 @@
 
 //------------------------------------------------------------------------------
 // PrintDebugThread: Print debugging information to the serial montior at fixed rate
-// 
+//
 // TODO: characterize how much bandwidth it uses
 static THD_WORKING_AREA(waPrintDebugThread, 256);
 static THD_FUNCTION(PrintDebugThread, arg) {
