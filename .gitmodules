@@ -1,0 +1,6 @@
+[submodule "lib/SdFat"]
+	path = lib/SdFat
+	url = https://github.com/greiman/SdFat.git
+[submodule "lib/SparkFun_BNO080_Arduino_Library"]
+	path = lib/SparkFun_BNO080_Arduino_Library
+	url = https://github.com/sparkfun/SparkFun_BNO080_Arduino_Library.git

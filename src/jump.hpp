@@ -72,7 +72,7 @@ void TrajectoryJump (float t, float launchTime, float stanceHeight,
     float n = t/launchTime;
     x = 0;
     y = downAMP*n + stanceHeight;
-    Serial.print(y)
+    Serial.print(y);
     Serial.print(' ');
     //y = downAMP*sin(PI/4 + PI/4*n) + stanceHeight;
 }
@@ -84,7 +84,7 @@ void MoveLegJump(ODriveArduino& odrive, float t, float launchTime,
     float x; // float x for leg to be set by the sin trajectory
     float y;
     TrajectoryJump(t, launchTime, stanceHeight, downAMP, x, y);
-    CartesianToEncoder(x, y, leg_direction, sign, enc0, enc1);
+    // CartesianToEncoder(x, y, leg_direction, sign, enc0, enc1);
     odrive.SetPosition(0,(int)enc0);
     odrive.SetPosition(1,(int)enc1);
 }

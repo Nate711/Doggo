@@ -115,8 +115,8 @@ void chSetup() {
         NORMALPRIO, BlinkThread, NULL);
 
     // Datalog Thread: logs IMU data
-    // chThdCreateStatic(waDatalogThread, sizeof(waDatalogThread),
-    //     NORMALPRIO, DatalogThread, NULL);
+    chThdCreateStatic(waDatalogThread, sizeof(waDatalogThread),
+        NORMALPRIO, DatalogThread, NULL);
 }
 //------------------------------------------------------------------------------
 // Setup thread.
