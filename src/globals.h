@@ -19,10 +19,10 @@ template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(a
 // the ODriveArduino class and put the pos estimate struct in there too
 
 // Make references to Teensy <-> computer serial (aka USB) and the ODrive(s)
-HardwareSerial& odrv0Serial = Serial1;
-HardwareSerial& odrv1Serial = Serial2;
-HardwareSerial& odrv2Serial = Serial3;
-HardwareSerial& odrv3Serial = Serial4;
+extern HardwareSerial& odrv0Serial;
+extern HardwareSerial& odrv1Serial;
+extern HardwareSerial& odrv2Serial;
+extern HardwareSerial& odrv3Serial;
 
 // Make structs to hold motor readings
 // TODO: figure out if I want to mimic the ODive struct style or not
@@ -35,15 +35,14 @@ struct ODrive {
         float abs_pos_estimate = pos_estimate + ENCODER_OFFSET;
     };
     Axis axis0,axis1;
-} odrv0, odrv1, odrv2, odrv3;
+};
+
+extern struct ODrive odrv0, odrv1, odrv2, odrv3;
 
 // ODriveArduino objects
 // These objects are responsible for sending commands to the ODrive over their
 // respective serial port
-ODriveArduino odrv0Interface(odrv0Serial);
-ODriveArduino odrv1Interface(odrv1Serial);
-ODriveArduino odrv2Interface(odrv2Serial);
-ODriveArduino odrv3Interface(odrv3Serial);
+extern ODriveArduino odrv0Interface, odrv1Interface, odrv2Interface, odrv3Interface;
 
 //------------------------------------------------------------------------------
 // Global variables. These are needed for cross-thread communication!!
@@ -55,17 +54,19 @@ struct LegGain {
 
     float Kp_gamma = 0;
     float Kd_gamma = 0;
-} leg_default;
+};
+
+extern struct LegGain leg_default;
 
 // Number of idle cycles per second
-volatile uint32_t count = 0;
+extern volatile uint32_t count;
 // Maximum time between idle cycles
-volatile uint32_t maxDelay = 0;
+extern volatile uint32_t maxDelay;
 
 // The last time (in microseconds) that the Teensy sent a message to an ODrive
-volatile long latest_send_timestamp = 0;
+extern volatile long latest_send_timestamp;
 // The last time (in microseconds) that the Teensy received a message from an ODrive
-volatile long latest_receive_timestamp = 0;
+extern volatile long latest_receive_timestamp;
 
 // Struct to hold information helpful for debugging/printing to serial monitor
 struct DebugValues {
@@ -75,6 +76,7 @@ struct DebugValues {
     ODrive& odrv2 = odrv2;
     ODrive& odrv3 = odrv3;
 };
-DebugValues global_debug_values;
+
+extern struct DebugValues global_debug_values;
 
 #endif
