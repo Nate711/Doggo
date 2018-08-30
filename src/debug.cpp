@@ -1,17 +1,14 @@
 #include "ChRt.h"
 #include "Arduino.h"
 #include "config.h"
-
-
-#ifndef DEBUG_H
-#define DEBUG_H
+#include "globals.h"
 
 //------------------------------------------------------------------------------
 // PrintDebugThread: Print debugging information to the serial montior at fixed rate
 //
 // TODO: characterize how much bandwidth it uses
-static THD_WORKING_AREA(waPrintDebugThread, 256);
-static THD_FUNCTION(PrintDebugThread, arg) {
+THD_WORKING_AREA(waPrintDebugThread, 256);
+THD_FUNCTION(PrintDebugThread, arg) {
     (void)arg;
     int count = 0;
 
@@ -35,5 +32,3 @@ static THD_FUNCTION(PrintDebugThread, arg) {
         chThdSleepMilliseconds(1000/DEBUG_PRINT_FREQ);
     }
 }
-
-#endif

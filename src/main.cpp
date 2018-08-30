@@ -22,7 +22,7 @@
 #include "uart.hpp"
 #include "position_control.h"
 #include "usb_serial.hpp"
-#include "debug.hpp"
+#include "debug.h"
 #include "config.h"
 
 //------------------------------------------------------------------------------
