@@ -1,6 +1,6 @@
 #include "ChRt.h"
 #include "Arduino.h"
-#include "config.hpp"
+#include "config.h"
 
 
 #ifndef DEBUG_H

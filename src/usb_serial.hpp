@@ -1,7 +1,7 @@
 #include "ChRt.h"
 #include "Arduino.h"
-#include "globals.hpp"
-#include "config.hpp"
+#include "globals.h"
+#include "config.h"
 
 #ifndef USB_SERIAL_H
 #define USB_SERIAL_H

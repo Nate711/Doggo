@@ -8,9 +8,9 @@
 // #define PRINT_ONCE
 
 // Important: Thread execution frequencies
-const int POSITION_CONTROL_FREQ = 100;
-const int DEBUG_PRINT_FREQ = 100;
-const int UART_FREQ = 20000;
-const int USB_SERIAL_FREQ = 10;
+#define POSITION_CONTROL_FREQ 100
+#define DEBUG_PRINT_FREQ 100
+#define UART_FREQ 20000
+#define USB_SERIAL_FREQ 10
 
 #endif

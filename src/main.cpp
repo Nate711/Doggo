@@ -18,12 +18,12 @@
 #include "ChRt.h"
 #include "Arduino.h"
 #include "ODriveArduino.h"
-#include "globals.hpp"
+#include "globals.h"
 #include "uart.hpp"
 #include "position_control.h"
 #include "usb_serial.hpp"
 #include "debug.hpp"
-#include "config.hpp"
+#include "config.h"
 
 //------------------------------------------------------------------------------
 // E-STOP function

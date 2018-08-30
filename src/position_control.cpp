@@ -1,8 +1,8 @@
 #include "position_control.h"
 #include "Arduino.h"
 #include "ODriveArduino.h"
-#include "config.hpp"
-#include "globals.hpp"
+#include "config.h"
+#include "globals.h"
 
 //------------------------------------------------------------------------------
 // PositionControlThread: Motor position control thread

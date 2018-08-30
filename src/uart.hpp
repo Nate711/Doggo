@@ -1,8 +1,8 @@
 #include "ChRt.h"
 #include "Arduino.h"
 #include "ODriveArduino.h"
-#include "globals.hpp"
-#include "config.hpp"
+#include "globals.h"
+#include "config.h"
 
 
 #ifndef UART_H
