@@ -1,14 +1,12 @@
+#include "usb_serial.h"
 #include "ChRt.h"
 #include "Arduino.h"
 #include "globals.h"
 #include "config.h"
 
-#ifndef USB_SERIAL_H
-#define USB_SERIAL_H
+THD_WORKING_AREA(waUSBSerialThread, 128);
 
-static THD_WORKING_AREA(waUSBSerialThread, 128);
-
-static THD_FUNCTION(USBSerialThread, arg) {
+THD_FUNCTION(USBSerialThread, arg) {
     (void)arg;
 
     while(true) {
@@ -28,5 +26,3 @@ static THD_FUNCTION(USBSerialThread, arg) {
       chThdSleepMicroseconds(1000000/USB_SERIAL_FREQ);
     }
 }
-
-#endif

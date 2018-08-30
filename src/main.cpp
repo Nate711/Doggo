@@ -21,7 +21,7 @@
 #include "globals.h"
 #include "uart.h"
 #include "position_control.h"
-#include "usb_serial.hpp"
+#include "usb_serial.h"
 #include "debug.h"
 #include "config.h"
 
