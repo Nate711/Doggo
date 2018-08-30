@@ -36,6 +36,7 @@ static THD_FUNCTION(PositionControlThread, arg) {
     while(true) {
         // CoupledPIDControl();
         // ODrivePosControl();
+<<<<<<< HEAD
         // sinTrajectoryPosControl();
 
         const float stanceHeight = 0.15; // Desired height of body from ground during walking (m)
@@ -54,6 +55,11 @@ static THD_FUNCTION(PositionControlThread, arg) {
             leg1_direction);
 
         chThdSleepMicroseconds(1000000/POSITION_CONTROL_FREQ);
+=======
+        //sinTrajectoryPosControl();
+        chThdSleepMilliseconds(10);
+
+>>>>>>> 11e4b5ac918edf75d344fcf26ff5c7d2c91ab4f9
     }
 }
 
@@ -216,6 +222,7 @@ void pronk() {
         leg3_direction);
     Serial.println();
 }
+
 
 /**
 * Trot gait parameters

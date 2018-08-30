@@ -2,6 +2,7 @@
 #include "Arduino.h"
 #include "globals.hpp"
 #include "config.hpp"
+#include "jump.hpp"
 
 #ifndef USB_SERIAL_H
 #define USB_SERIAL_H
@@ -17,6 +18,7 @@ static THD_FUNCTION(USBSerialThread, arg) {
           // TODO interpret messages
           switch(c) {
               case 'j':
+                  TrajectoryPosControlJump(millis()/1000.0f);
                   Serial.println("Jump");
                   break;
               default:
