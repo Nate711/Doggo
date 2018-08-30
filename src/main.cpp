@@ -19,7 +19,7 @@
 #include "Arduino.h"
 #include "ODriveArduino.h"
 #include "globals.h"
-#include "uart.hpp"
+#include "uart.h"
 #include "position_control.h"
 #include "usb_serial.hpp"
 #include "debug.h"
