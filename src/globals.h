@@ -1,8 +1,6 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#include "ChRt.h"
-#include "Arduino.h"
 #include "ODriveArduino.h"
 
 //------------------------------------------------------------------------------
