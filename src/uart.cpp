@@ -1,12 +1,9 @@
+#include "uart.h"
 #include "ChRt.h"
 #include "Arduino.h"
 #include "ODriveArduino.h"
-#include "globals.hpp"
-#include "config.hpp"
-
-
-#ifndef UART_H
-#define UART_H
+#include "globals.h"
+#include "config.h"
 
 //------------------------------------------------------------------------------
 // SerialThread: receive serial messages from ODrive.
@@ -17,13 +14,9 @@
 // TODO: add timeout behavior: throw out buffer if certain time has elapsed since
 // a new message has started being received
 
-void ProcessPositionMsg(char* msg, int len);
-void ProcessNLMessage(char* msg, size_t len);
-enum RXState { IDLING, READ_LEN, READ_PAYLOAD, READ_PAYLOAD_UNTIL_NL};
-// 128 byte stack beyond task switch and interrupt needs.
-static THD_WORKING_AREA(waSerialThread, 128);
+THD_WORKING_AREA(waSerialThread, 128);
 
-static THD_FUNCTION(SerialThread, arg) {
+THD_FUNCTION(SerialThread, arg) {
     (void)arg;
 
     const int BUFFER_SIZE = 32;
@@ -177,7 +170,6 @@ void ProcessPositionMsg(char* msg, int len) {
 #endif
     }
 }
-#endif
 
 void ProcessNLMessage(char* msg, size_t len) {
     Serial << "Received NL message: " << msg;

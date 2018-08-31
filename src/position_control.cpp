@@ -1,26 +1,10 @@
-#include "ChRt.h"
+#include "position_control.h"
 #include "Arduino.h"
 #include "ODriveArduino.h"
-#include "config.hpp"
-#include "globals.hpp"
+#include "config.h"
+#include "globals.h"
+#include "jump.h"
 
-#ifndef POSITION_CONTROL_H
-#define POSITION_CONTROL_H
-
-void CoupledPIDControl();
-void HipAngleToCartesian(float alpha, float beta, float& x, float& y);
-void GetGamma(float L, float theta, float& gamma);
-void LegParamsToHipAngles(float L, float theta, float& alpha, float& beta);
-void LegParamsToCartesian(float L, float theta, float& x, float& y);
-void CartesianToLegParams(float x, float y, float leg_direction, float& L, float& theta);
-void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, float& gamma);
-void SinTrajectory(float t, float FREQ, float gaitOffset, float stanceHeight, float flightPercent, float stepLength, float upAMP, float downAMP, float& x, float& y);
-void CartesianToEncoder(float x, float y, float leg_direction, float sign, float& enc0, float& enc1);
-void CoupledMoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offset, float stanceHeight, float flightPercent, float stepLength, float upAMP, float downAMP, float leg_direction);
-void SinTrajectoryPosControl();
-void trot();
-void pronk();
-void bound();
 //------------------------------------------------------------------------------
 // PositionControlThread: Motor position control thread
 // Periodically calculates result from PID controller and sends off new motor
@@ -28,18 +12,18 @@ void bound();
 
 // TODO: add support for multiple ODrives
 
-static THD_WORKING_AREA(waPositionControlThread, 128);
+THD_WORKING_AREA(waPositionControlThread, 512);
 
-static THD_FUNCTION(PositionControlThread, arg) {
+THD_FUNCTION(PositionControlThread, arg) {
     (void)arg;
 
     while(true) {
-        // CoupledPIDControl();
         // ODrivePosControl();
         // sinTrajectoryPosControl();
-        //sinTrajectoryPosControl();
-        chThdSleepMilliseconds(10);
-
+        if(ShouldExecuteJump()) {
+            ExecuteJump();
+        }
+        chThdSleepMicroseconds(1000000/POSITION_CONTROL_FREQ);
     }
 }
 
@@ -99,8 +83,8 @@ void GetGamma(float L, float theta, float& gamma) {
 void LegParamsToHipAngles(float L, float theta, float& alpha, float& beta) {
     float gamma;
     GetGamma(L, theta, gamma);
-    alpha = theta - gamma;
-    beta = theta + gamma;
+    alpha = theta + gamma;
+    beta = theta - gamma;
 }
 
 /**
@@ -157,7 +141,7 @@ void CoupledMoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offse
     float y;
     SinTrajectory(t, FREQ, gait_offset, stanceHeight, flightPercent, stepLength, upAMP, downAMP, x, y);
     CartesianToThetaGamma(x, y, leg_direction, theta, gamma);
-    odrive.SetCoupledPosition(theta, 38.2, 0.48, gamma, 20, 0.48);
+    odrive.SetCoupledPosition(theta, 120, 0.48, gamma, 120, 0.48);
 }
 
 /**
@@ -166,16 +150,16 @@ void CoupledMoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offse
 void pronk() {
     // min radius = 0.8
     // max radius = 0.25
-    const float stanceHeight = 0.15; // Desired height of body from ground during walking (m)
-    const float downAMP = 0.05; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
-    const float upAMP = 0.05; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
-    const float flightPercent = 0.4; // Portion of the gait time should be doing the down portion of trajectory
+    const float stanceHeight = 0.12; // Desired height of body from ground during walking (m)
+    const float downAMP = 0.09; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
+    const float upAMP = 0.0; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
+    const float flightPercent = 0.9; // Portion of the gait time should be doing the down portion of trajectory
     const float stepLength = 0.0; //0.12; // Length of entire step (m)
-    const float FREQ = 1.0; // Frequency of one gait cycle (Hz)
+    const float FREQ = .8; // Frequency of one gait cycle (Hz)
     float t = millis()/1000.0;
 
     Serial.print(t);
-    Serial.print(" ");
+    Serial.print(" \n");
 
     const float leg0_offset = 0.0;
     const float leg0_direction = -1.0;
@@ -203,11 +187,10 @@ void pronk() {
     Serial.println();
 }
 
-
 /**
 * Trot gait parameters
 */
-void trot() {
+void bound() {
     // min radius = 0.8
     // max radius = 0.25
     const float stanceHeight = 0.15; // Desired height of body from ground during walking (m)
@@ -219,7 +202,7 @@ void trot() {
     float t = millis()/1000.0;
 
     Serial.print(t);
-    Serial.print(" ");
+    Serial.print(" \n");
 
     const float leg0_offset = 0.0;
     const float leg0_direction = -1.0;
@@ -250,15 +233,15 @@ void trot() {
 /**
 * Bound gait parameters
 */
-void bound() {
+void trot() {
     // min radius = 0.8
     // max radius = 0.25
-    const float stanceHeight = 0.15; // Desired height of body from ground during walking (m)
-    const float downAMP = 0.4; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
-    const float upAMP = 0.04; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
-    const float flightPercent = 0.5; // Portion of the gait time should be doing the down portion of trajectory
-    const float stepLength = 0.0; // Length of entire step (m)
-    const float FREQ = 1.0; // Frequency of one gait cycle (Hz)
+    const float stanceHeight = 0.18; // Desired height of body from ground during walking (m)
+    const float downAMP = 0.00; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
+    const float upAMP = 0.06; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
+    const float flightPercent = 0.6; // Portion of the gait time should be doing the down portion of trajectory
+    const float stepLength = 0.0;//0.12; // Length of entire step (m)
+    const float FREQ = 2.0; //2.4 Frequency of one gait cycle (Hz)
     float t = millis()/1000.0;
 
     Serial.print(t);
@@ -289,5 +272,3 @@ void bound() {
         leg3_direction);
     Serial.println();
 }
-
-#endif
