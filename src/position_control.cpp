@@ -141,7 +141,7 @@ void CoupledMoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offse
     float y;
     SinTrajectory(t, FREQ, gait_offset, stanceHeight, flightPercent, stepLength, upAMP, downAMP, x, y);
     CartesianToThetaGamma(x, y, leg_direction, theta, gamma);
-    odrive.SetCoupledPosition(theta, 38.2, 0.48, gamma, 20, 0.48);
+    odrive.SetCoupledPosition(theta, 120, 0.48, gamma, 120, 0.48);
 }
 
 /**
@@ -150,16 +150,16 @@ void CoupledMoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offse
 void pronk() {
     // min radius = 0.8
     // max radius = 0.25
-    const float stanceHeight = 0.15; // Desired height of body from ground during walking (m)
-    const float downAMP = 0.05; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
-    const float upAMP = 0.05; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
-    const float flightPercent = 0.4; // Portion of the gait time should be doing the down portion of trajectory
+    const float stanceHeight = 0.12; // Desired height of body from ground during walking (m)
+    const float downAMP = 0.09; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
+    const float upAMP = 0.0; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
+    const float flightPercent = 0.9; // Portion of the gait time should be doing the down portion of trajectory
     const float stepLength = 0.0; //0.12; // Length of entire step (m)
-    const float FREQ = 1.0; // Frequency of one gait cycle (Hz)
+    const float FREQ = .8; // Frequency of one gait cycle (Hz)
     float t = millis()/1000.0;
 
     Serial.print(t);
-    Serial.print(" ");
+    Serial.print(" \n");
 
     const float leg0_offset = 0.0;
     const float leg0_direction = -1.0;
@@ -190,7 +190,7 @@ void pronk() {
 /**
 * Trot gait parameters
 */
-void trot() {
+void bound() {
     // min radius = 0.8
     // max radius = 0.25
     const float stanceHeight = 0.15; // Desired height of body from ground during walking (m)
@@ -202,7 +202,7 @@ void trot() {
     float t = millis()/1000.0;
 
     Serial.print(t);
-    Serial.print(" ");
+    Serial.print(" \n");
 
     const float leg0_offset = 0.0;
     const float leg0_direction = -1.0;
@@ -233,15 +233,15 @@ void trot() {
 /**
 * Bound gait parameters
 */
-void bound() {
+void trot() {
     // min radius = 0.8
     // max radius = 0.25
-    const float stanceHeight = 0.15; // Desired height of body from ground during walking (m)
-    const float downAMP = 0.4; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
-    const float upAMP = 0.04; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
-    const float flightPercent = 0.5; // Portion of the gait time should be doing the down portion of trajectory
-    const float stepLength = 0.0; // Length of entire step (m)
-    const float FREQ = 1.0; // Frequency of one gait cycle (Hz)
+    const float stanceHeight = 0.18; // Desired height of body from ground during walking (m)
+    const float downAMP = 0.00; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
+    const float upAMP = 0.06; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
+    const float flightPercent = 0.6; // Portion of the gait time should be doing the down portion of trajectory
+    const float stepLength = 0.0;//0.12; // Length of entire step (m)
+    const float FREQ = 2.0; //2.4 Frequency of one gait cycle (Hz)
     float t = millis()/1000.0;
 
     Serial.print(t);
