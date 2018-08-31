@@ -4,10 +4,9 @@
 #include "ChRT.h"
 #include "ODriveArduino.h"
 
-extern THD_WORKING_AREA(waPositionControlThread, 128);
+extern THD_WORKING_AREA(waPositionControlThread, 512);
 extern THD_FUNCTION(PositionControlThread, arg);
 
-void CoupledPIDControl();
 void HipAngleToCartesian(float alpha, float beta, float& x, float& y);
 void GetGamma(float L, float theta, float& gamma);
 void LegParamsToHipAngles(float L, float theta, float& alpha, float& beta);

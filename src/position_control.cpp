@@ -3,6 +3,7 @@
 #include "ODriveArduino.h"
 #include "config.h"
 #include "globals.h"
+#include "jump.h"
 
 //------------------------------------------------------------------------------
 // PositionControlThread: Motor position control thread
@@ -11,31 +12,17 @@
 
 // TODO: add support for multiple ODrives
 
-THD_WORKING_AREA(waPositionControlThread, 128);
+THD_WORKING_AREA(waPositionControlThread, 512);
 
 THD_FUNCTION(PositionControlThread, arg) {
     (void)arg;
 
     while(true) {
-        // CoupledPIDControl();
         // ODrivePosControl();
         // sinTrajectoryPosControl();
-
-        const float stanceHeight = 0.15; // Desired height of body from ground during walking (m)
-        const float downAMP = 0.0; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
-        const float upAMP = 0.07; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
-        const float flightPercent = 0.2; // Portion of the gait time should be doing the down portion of trajectory
-        const float stepLength = 0.12; // Length of entire step (m)
-        const float FREQ = 1.0; // Frequency of one gait cycle (Hz)
-        const float gaitOffset1 = 0.0; // Phase shift in percent (i.e. 25% shift is 0.25) to be passed in depending on Hip
-        float t = millis()/1000.0;
-
-        const float leg1_offset = 0.25;
-        const float leg1_direction = 1.0;
-        CoupledMoveLeg(odrv1Interface, t, FREQ, leg1_offset, stanceHeight,
-            flightPercent, stepLength, upAMP, downAMP,
-            leg1_direction);
-
+        if(ShouldExecuteJump()) {
+            ExecuteJump();
+        }
         chThdSleepMicroseconds(1000000/POSITION_CONTROL_FREQ);
     }
 }
