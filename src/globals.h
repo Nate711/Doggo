@@ -45,17 +45,6 @@ extern ODriveArduino odrv0Interface, odrv1Interface, odrv2Interface, odrv3Interf
 //------------------------------------------------------------------------------
 // Global variables. These are needed for cross-thread communication!!
 
-// Struct to hold PID gains for the legs
-struct LegGain {
-    float Kp_theta = 0;
-    float Kd_theta = 0;
-
-    float Kp_gamma = 0;
-    float Kd_gamma = 0;
-};
-
-extern struct LegGain leg_default;
-
 // Number of idle cycles per second
 extern volatile uint32_t count;
 // Maximum time between idle cycles

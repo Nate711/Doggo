@@ -137,30 +137,30 @@ void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, 
     Serial.print('\n');
 }
 
-void CoupledMoveLeg(ODriveArduino& odrive, float t, struct GaitParams params, float gait_offset, float leg_direction) {
+void CoupledMoveLeg(ODriveArduino& odrive, float t, struct GaitParams params, float gait_offset, float leg_direction, struct LegGain gains) {
     float theta;
     float gamma;
     float x; // float x for leg 0 to be set by the sin trajectory
     float y;
     SinTrajectory(t, params, gait_offset, x, y);
     CartesianToThetaGamma(x, y, leg_direction, theta, gamma);
-    odrive.SetCoupledPosition(theta, 120, 0.48, gamma, 120, 0.48);
+    odrive.SetCoupledPosition(theta, gamma, gains);
 }
 
-void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float leg2_offset, float leg3_offset) {
+void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float leg2_offset, float leg3_offset, struct LegGain gains) {
     float t = millis()/1000.0;
 
     const float leg0_direction = -1.0;
-    CoupledMoveLeg(odrv0Interface, t, params, leg0_offset, leg0_direction);
+    CoupledMoveLeg(odrv0Interface, t, params, leg0_offset, leg0_direction, gains);
 
     const float leg1_direction = -1.0;
-    CoupledMoveLeg(odrv1Interface, t, params, leg1_offset, leg1_direction);
+    CoupledMoveLeg(odrv1Interface, t, params, leg1_offset, leg1_direction, gains);
 
     const float leg2_direction = 1.0;
-    CoupledMoveLeg(odrv2Interface, t, params, leg2_offset, leg2_direction);
+    CoupledMoveLeg(odrv2Interface, t, params, leg2_offset, leg2_direction, gains);
 
     const float leg3_direction = 1.0;
-    CoupledMoveLeg(odrv3Interface, t, params, leg3_offset, leg3_direction);
+    CoupledMoveLeg(odrv3Interface, t, params, leg3_offset, leg3_direction, gains);
 }
 
 /**
@@ -169,7 +169,8 @@ void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float 
 void pronk() {
     // {stanceHeight, downAMP, upAMP, flightPercent, stepLength, FREQ}
     struct GaitParams params = {0.12, 0.09, 0.0, 0.9, 0.0, 0.8};
-    gait(params, 0.0, 0.0, 0.0, 0.0);
+    struct LegGain gains = {120, 0.48, 80, 0.48};
+    gait(params, 0.0, 0.0, 0.0, 0.0, gains);
 }
 
 /**
@@ -178,7 +179,8 @@ void pronk() {
 void bound() {
     // {stanceHeight, downAMP, upAMP, flightPercent, stepLength, FREQ}
     struct GaitParams params = {0.15, 0.0, 0.05, 0.35, 0.0, 1.0};
-    gait(params, 0.0, 0.5, 0.5, 0.0);
+    struct LegGain gains = {120, 0.48, 80, 0.48};
+    gait(params, 0.0, 0.5, 0.5, 0.0, gains);
 }
 
 /**
@@ -187,5 +189,6 @@ void bound() {
 void trot() {
     // {stanceHeight, downAMP, upAMP, flightPercent, stepLength, FREQ}
     struct GaitParams params = {0.18, 0.0, 0.06, 0.6, 0.0, 2.0};
-    gait(params, 0.0, 0.5, 0.0, 0.5);
+    struct LegGain gains = {120, 0.48, 80, 0.48};
+    gait(params, 0.0, 0.5, 0.0, 0.5, gains);
 }

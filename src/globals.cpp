@@ -30,9 +30,6 @@ ODriveArduino odrv3Interface(odrv3Serial);
 //------------------------------------------------------------------------------
 // Global variables. These are needed for cross-thread communication!!
 
-// Struct to hold PID gains for the legs
-struct LegGain leg_default;
-
 // Number of idle cycles per second
 volatile uint32_t count = 0;
 // Maximum time between idle cycles

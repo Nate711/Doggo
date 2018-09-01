@@ -60,10 +60,11 @@ void ExecuteJump() {
         // Send commands to odrives
         float theta, gamma;
         CartesianToThetaGamma(x, y, 1.0, theta, gamma);
-        odrv0Interface.SetCoupledPosition(theta, 120, 0.48, gamma, 120, 0.48);
-        odrv1Interface.SetCoupledPosition(theta, 120, 0.48, gamma, 120, 0.48);
-        odrv2Interface.SetCoupledPosition(theta, 120, 0.48, gamma, 120, 0.48);
-        odrv3Interface.SetCoupledPosition(theta, 120, 0.48, gamma, 120, 0.48);
+        struct LegGain gains = {120, 0.48, 120, 0.48};
+        odrv0Interface.SetCoupledPosition(theta, gamma, gains);
+        odrv1Interface.SetCoupledPosition(theta, gamma, gains);
+        odrv2Interface.SetCoupledPosition(theta, gamma, gains);
+        odrv3Interface.SetCoupledPosition(theta, gamma, gains);
 
         Serial << "Jump: +" << t << "s, y: " << y;
     }
