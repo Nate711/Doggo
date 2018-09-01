@@ -144,131 +144,59 @@ void CoupledMoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offse
     odrive.SetCoupledPosition(theta, 120, 0.48, gamma, 120, 0.48);
 }
 
+void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float leg2_offset, float leg3_offset) {
+    float stanceHeight = params.stanceHeight; // Desired height of body from ground during walking (m)
+    float downAMP = params.downAMP; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
+    float upAMP = params.upAMP; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
+    float flightPercent = params.flightPercent; // Portion of the gait time should be doing the down portion of trajectory
+    float stepLength = params.stepLength; // Length of entire step (m)
+    float FREQ = params.FREQ; // Frequency of one gait cycle (Hz)
+    float t = millis()/1000.0;
+
+    const float leg0_direction = -1.0;
+    CoupledMoveLeg(odrv0Interface, t, FREQ, leg0_offset, stanceHeight,
+      flightPercent, stepLength, upAMP, downAMP,
+      leg0_direction);
+
+    const float leg1_direction = -1.0;
+    CoupledMoveLeg(odrv1Interface, t, FREQ, leg1_offset, stanceHeight,
+      flightPercent, stepLength, upAMP, downAMP,
+      leg1_direction);
+
+    const float leg2_direction = 1.0;
+    CoupledMoveLeg(odrv2Interface, t, FREQ, leg2_offset, stanceHeight,
+      flightPercent, stepLength, upAMP, downAMP,
+      leg2_direction);
+
+    const float leg3_direction = 1.0;
+    CoupledMoveLeg(odrv3Interface, t, FREQ, leg3_offset, stanceHeight,
+      flightPercent, stepLength, upAMP, downAMP,
+      leg3_direction);
+}
+
 /**
 * Pronk gait parameters
 */
 void pronk() {
-    // min radius = 0.8
-    // max radius = 0.25
-    const float stanceHeight = 0.12; // Desired height of body from ground during walking (m)
-    const float downAMP = 0.09; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
-    const float upAMP = 0.0; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
-    const float flightPercent = 0.9; // Portion of the gait time should be doing the down portion of trajectory
-    const float stepLength = 0.0; //0.12; // Length of entire step (m)
-    const float FREQ = .8; // Frequency of one gait cycle (Hz)
-    float t = millis()/1000.0;
-
-    Serial.print(t);
-    Serial.print(" \n");
-
-    const float leg0_offset = 0.0;
-    const float leg0_direction = -1.0;
-    CoupledMoveLeg(odrv0Interface, t, FREQ, leg0_offset, stanceHeight,
-        flightPercent, stepLength, upAMP, downAMP,
-        leg0_direction);
-
-    const float leg1_offset = 0.0;
-    const float leg1_direction = -1.0;
-    CoupledMoveLeg(odrv1Interface, t, FREQ, leg1_offset, stanceHeight,
-        flightPercent, stepLength, upAMP, downAMP,
-        leg1_direction);
-
-    const float leg2_offset = 0.0;
-    const float leg2_direction = 1.0;
-    CoupledMoveLeg(odrv2Interface, t, FREQ, leg2_offset, stanceHeight,
-        flightPercent, stepLength, upAMP, downAMP,
-        leg2_direction);
-
-    const float leg3_offset = 0.0;
-    const float leg3_direction = 1.0;
-    CoupledMoveLeg(odrv3Interface, t, FREQ, leg3_offset, stanceHeight,
-        flightPercent, stepLength, upAMP, downAMP,
-        leg3_direction);
-    Serial.println();
+    // {stanceHeight, downAMP, upAMP, flightPercent, stepLength, FREQ}
+    struct GaitParams params = {0.12, 0.09, 0.0, 0.9, 0.0, 0.8};
+    gait(params, 0.0, 0.0, 0.0, 0.0);
 }
 
 /**
 * Trot gait parameters
 */
 void bound() {
-    // min radius = 0.8
-    // max radius = 0.25
-    const float stanceHeight = 0.15; // Desired height of body from ground during walking (m)
-    const float downAMP = 0.0; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
-    const float upAMP = 0.05; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
-    const float flightPercent = 0.35; // Portion of the gait time should be doing the down portion of trajectory
-    const float stepLength = 0.0; // Length of entire step (m)
-    const float FREQ = 1.0; // Frequency of one gait cycle (Hz)
-    float t = millis()/1000.0;
-
-    Serial.print(t);
-    Serial.print(" \n");
-
-    const float leg0_offset = 0.0;
-    const float leg0_direction = -1.0;
-    CoupledMoveLeg(odrv0Interface, t, FREQ, leg0_offset, stanceHeight,
-        flightPercent, stepLength, upAMP, downAMP,
-        leg0_direction);
-
-    const float leg1_offset = 0.5;
-    const float leg1_direction = -1.0;
-    CoupledMoveLeg(odrv1Interface, t, FREQ, leg1_offset, stanceHeight,
-        flightPercent, stepLength, upAMP, downAMP,
-        leg1_direction);
-
-    const float leg2_offset = 0.5;
-    const float leg2_direction = 1.0;
-    CoupledMoveLeg(odrv2Interface, t, FREQ, leg2_offset, stanceHeight,
-        flightPercent, stepLength, upAMP, downAMP,
-        leg2_direction);
-
-    const float leg3_offset = 0.0;
-    const float leg3_direction = 1.0;
-    CoupledMoveLeg(odrv3Interface, t, FREQ, leg3_offset, stanceHeight,
-        flightPercent, stepLength, upAMP, downAMP,
-        leg3_direction);
-    Serial.println();
+    // {stanceHeight, downAMP, upAMP, flightPercent, stepLength, FREQ}
+    struct GaitParams params = {0.15, 0.0, 0.05, 0.35, 0.0, 1.0};
+    gait(params, 0.0, 0.5, 0.5, 0.0);
 }
 
 /**
 * Bound gait parameters
 */
 void trot() {
-    // min radius = 0.8
-    // max radius = 0.25
-    const float stanceHeight = 0.18; // Desired height of body from ground during walking (m)
-    const float downAMP = 0.00; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
-    const float upAMP = 0.06; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
-    const float flightPercent = 0.6; // Portion of the gait time should be doing the down portion of trajectory
-    const float stepLength = 0.0;//0.12; // Length of entire step (m)
-    const float FREQ = 2.0; //2.4 Frequency of one gait cycle (Hz)
-    float t = millis()/1000.0;
-
-    Serial.print(t);
-    Serial.print(" ");
-
-    const float leg0_offset = 0.0;
-    const float leg0_direction = -1.0;
-    CoupledMoveLeg(odrv0Interface, t, FREQ, leg0_offset, stanceHeight,
-        flightPercent, stepLength, upAMP, downAMP,
-        leg0_direction);
-
-    const float leg1_offset = 0.5;
-    const float leg1_direction = -1.0;
-    CoupledMoveLeg(odrv1Interface, t, FREQ, leg1_offset, stanceHeight,
-        flightPercent, stepLength, upAMP, downAMP,
-        leg1_direction);
-
-    const float leg2_offset = 0.0;
-    const float leg2_direction = 1.0;
-    CoupledMoveLeg(odrv2Interface, t, FREQ, leg2_offset, stanceHeight,
-        flightPercent, stepLength, upAMP, downAMP,
-        leg2_direction);
-
-    const float leg3_offset = 0.5;
-    const float leg3_direction = 1.0;
-    CoupledMoveLeg(odrv3Interface, t, FREQ, leg3_offset, stanceHeight,
-        flightPercent, stepLength, upAMP, downAMP,
-        leg3_direction);
-    Serial.println();
+    // {stanceHeight, downAMP, upAMP, flightPercent, stepLength, FREQ}
+    struct GaitParams params = {0.18, 0.0, 0.06, 0.6, 0.0, 2.0};
+    gait(params, 0.0, 0.5, 0.0, 0.5);
 }

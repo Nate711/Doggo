@@ -17,8 +17,18 @@ void SinTrajectory(float t, float FREQ, float gaitOffset, float stanceHeight, fl
 void CartesianToEncoder(float x, float y, float leg_direction, float sign, float& enc0, float& enc1);
 void CoupledMoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offset, float stanceHeight, float flightPercent, float stepLength, float upAMP, float downAMP, float leg_direction);
 void SinTrajectoryPosControl();
+void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float leg2_offset, float leg3_offset);
 void trot();
 void pronk();
 void bound();
+
+struct GaitParams {
+    float stanceHeight = 0.18; // Desired height of body from ground during walking (m)
+    float downAMP = 0.00; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
+    float upAMP = 0.06; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
+    float flightPercent = 0.6; // Portion of the gait time should be doing the down portion of trajectory
+    float stepLength = 0.0; // Length of entire step (m)
+    float FREQ = 1.0; // Frequency of one gait cycle (Hz)
+};
 
 #endif
