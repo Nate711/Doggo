@@ -107,9 +107,14 @@ void CartesianToLegParams(float x, float y, float leg_direction, float& L, float
 /**
 * Sinusoidal trajectory generator function with flexibility from parameters described below. Can do 4-beat, 2-beat, trotting, etc with this.
 */
-void SinTrajectory (float t, float FREQ, float gaitOffset, float stanceHeight,
-                    float flightPercent, float stepLength, float upAMP,
-                    float downAMP, float& x, float& y) {
+void SinTrajectory (float t, struct GaitParams params, float gaitOffset, float& x, float& y) {
+    float stanceHeight = params.stanceHeight;
+    float downAMP = params.downAMP;
+    float upAMP = params.upAMP;
+    float flightPercent = params.flightPercent;
+    float stepLength = params.stepLength;
+    float FREQ = params.FREQ;
+
     float gp = fmod((FREQ*t+gaitOffset),1.0); // mod(a,m) returns remainder division of a by m
     if (gp <= flightPercent) {
         x = (gp/flightPercent)*stepLength - stepLength/2.0;
@@ -132,46 +137,30 @@ void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, 
     Serial.print('\n');
 }
 
-void CoupledMoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offset,
-             float stanceHeight, float flightPercent, float stepLength,
-             float upAMP, float downAMP, float leg_direction) {
+void CoupledMoveLeg(ODriveArduino& odrive, float t, struct GaitParams params, float gait_offset, float leg_direction) {
     float theta;
     float gamma;
     float x; // float x for leg 0 to be set by the sin trajectory
     float y;
-    SinTrajectory(t, FREQ, gait_offset, stanceHeight, flightPercent, stepLength, upAMP, downAMP, x, y);
+    SinTrajectory(t, params, gait_offset, x, y);
     CartesianToThetaGamma(x, y, leg_direction, theta, gamma);
     odrive.SetCoupledPosition(theta, 120, 0.48, gamma, 120, 0.48);
 }
 
 void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float leg2_offset, float leg3_offset) {
-    float stanceHeight = params.stanceHeight; // Desired height of body from ground during walking (m)
-    float downAMP = params.downAMP; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
-    float upAMP = params.upAMP; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
-    float flightPercent = params.flightPercent; // Portion of the gait time should be doing the down portion of trajectory
-    float stepLength = params.stepLength; // Length of entire step (m)
-    float FREQ = params.FREQ; // Frequency of one gait cycle (Hz)
     float t = millis()/1000.0;
 
     const float leg0_direction = -1.0;
-    CoupledMoveLeg(odrv0Interface, t, FREQ, leg0_offset, stanceHeight,
-      flightPercent, stepLength, upAMP, downAMP,
-      leg0_direction);
+    CoupledMoveLeg(odrv0Interface, t, params, leg0_offset, leg0_direction);
 
     const float leg1_direction = -1.0;
-    CoupledMoveLeg(odrv1Interface, t, FREQ, leg1_offset, stanceHeight,
-      flightPercent, stepLength, upAMP, downAMP,
-      leg1_direction);
+    CoupledMoveLeg(odrv1Interface, t, params, leg1_offset, leg1_direction);
 
     const float leg2_direction = 1.0;
-    CoupledMoveLeg(odrv2Interface, t, FREQ, leg2_offset, stanceHeight,
-      flightPercent, stepLength, upAMP, downAMP,
-      leg2_direction);
+    CoupledMoveLeg(odrv2Interface, t, params, leg2_offset, leg2_direction);
 
     const float leg3_direction = 1.0;
-    CoupledMoveLeg(odrv3Interface, t, FREQ, leg3_offset, stanceHeight,
-      flightPercent, stepLength, upAMP, downAMP,
-      leg3_direction);
+    CoupledMoveLeg(odrv3Interface, t, params, leg3_offset, leg3_direction);
 }
 
 /**

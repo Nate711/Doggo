@@ -13,9 +13,8 @@ void LegParamsToHipAngles(float L, float theta, float& alpha, float& beta);
 void LegParamsToCartesian(float L, float theta, float& x, float& y);
 void CartesianToLegParams(float x, float y, float leg_direction, float& L, float& theta);
 void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, float& gamma);
-void SinTrajectory(float t, float FREQ, float gaitOffset, float stanceHeight, float flightPercent, float stepLength, float upAMP, float downAMP, float& x, float& y);
-void CartesianToEncoder(float x, float y, float leg_direction, float sign, float& enc0, float& enc1);
-void CoupledMoveLeg(ODriveArduino& odrive, float t, float FREQ, float gait_offset, float stanceHeight, float flightPercent, float stepLength, float upAMP, float downAMP, float leg_direction);
+void SinTrajectory (float t, struct GaitParams params, float gaitOffset, float& x, float& y);
+void CoupledMoveLeg(ODriveArduino& odrive, float t, struct GaitParams params, float gait_offset, float leg_direction);
 void SinTrajectoryPosControl();
 void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float leg2_offset, float leg3_offset);
 void trot();
@@ -29,6 +28,15 @@ struct GaitParams {
     float flightPercent = 0.6; // Portion of the gait time should be doing the down portion of trajectory
     float stepLength = 0.0; // Length of entire step (m)
     float FREQ = 1.0; // Frequency of one gait cycle (Hz)
+};
+
+// Struct to hold PID gains for the legs
+struct LegGain {
+    float Kp_theta = 0;
+    float Kd_theta = 0;
+
+    float Kp_gamma = 0;
+    float Kd_gamma = 0;
 };
 
 #endif
