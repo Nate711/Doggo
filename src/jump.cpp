@@ -1,15 +1,10 @@
 #ifndef JUMP_H
 #define JUMP_H
 
+#include "jump.h"
 #include "ODriveArduino.h"
 #include "globals.h"
 #include "position_control.h"
-
-void TrajectoryJump(float t, float launchTime, float stanceHeight,float downAMP, float& x, float& y);
-void MoveLegJump(ODriveArduino& odrive, float t, float launchTime, float stanceHeight, float downAMP, float leg_direction, float sign);
-void StartJump(float start_time_s);
-bool ShouldExecuteJump();
-void ExecuteJump();
 
 // Privates
 bool execute_jump_ = false;
@@ -28,6 +23,18 @@ void StartJump(float start_time_s) {
  */
 bool ShouldExecuteJump() {
     return execute_jump_;
+}
+
+/**
+* Linear increase in height for jump.
+*/
+void TrajectoryJump(float t, float launchTime, float stanceHeight,
+    float downAMP, float& x, float& y) {
+    //Need to check if n works
+    float n = t/launchTime;
+    x = 0;
+    y = downAMP*n + stanceHeight;
+    //y = downAMP*sin(PI/4 + PI/4*n) + stanceHeight;
 }
 
 /**
@@ -60,19 +67,6 @@ void ExecuteJump() {
 
         Serial << "Jump: +" << t << "s, y: " << y;
     }
-}
-
-
-/**
-* Linear increase in height for jump.
-*/
-void TrajectoryJump(float t, float launchTime, float stanceHeight,
-    float downAMP, float& x, float& y) {
-    //Need to check if n works
-    float n = t/launchTime;
-    x = 0;
-    y = downAMP*n + stanceHeight;
-    //y = downAMP*sin(PI/4 + PI/4*n) + stanceHeight;
 }
 
 #endif
