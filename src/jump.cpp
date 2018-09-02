@@ -38,12 +38,10 @@ void TrajectoryJump(float t, float launchTime, float stanceHeight,
 * Drives the ODrives in an open-loop, position-control sinTrajectory.
 */
 void ExecuteJump() {
-    Serial.println("Jump Initialized");
-
     // min radius = 0.8
     // max radius = 0.25
     const float prep_time = 0.5f; // Duration before jumping [s]
-    const float launch_time = 5.0f ; // Duration before retracting the leg [s]
+    const float launch_time = 0.2f ; // Duration before retracting the leg [s]
     const float fall_time = 1.0f; //Duration after retracting leg to go back to normal behavior [s]
 
     const float stance_height = 0.09f; // Desired leg extension before the jump [m]
@@ -61,7 +59,7 @@ void ExecuteJump() {
         // Use gains with small stiffness and lots of damping
         struct LegGain gains = {50, 1.0, 50, 1.0};
         CommandAllLegs(theta,gamma,gains);
-        Serial << "Jump: +" << t << "s, y: " << y;
+        Serial << "Prep: +" << t << "s, y: " << y;
     } else if (t >= prep_time && t < prep_time + launch_time) {
         float x = 0;
         float y = jump_extension;
@@ -82,11 +80,12 @@ void ExecuteJump() {
         struct LegGain gains = {50, 1.0, 50, 1.0};
 
         CommandAllLegs(theta, gamma, gains);
-        Serial << "Jump: +" << t << "s, y: " << y;
+        Serial << "Retract: +" << t << "s, y: " << y;
     } else {
         execute_jump_ = false;
         Serial.println("Jump Complete.");
     }
+    Serial << '\n';
 }
 
 void CommandAllLegs(float theta, float gamma, LegGain gains) {
