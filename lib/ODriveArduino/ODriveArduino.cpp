@@ -19,9 +19,9 @@ ODriveArduino::ODriveArduino(HardwareSerial& serial)
  *
  * Example: odrv0.SetProperty("axis0.motor.config.current_lim", "5.0f");
  */
-void ODriveArduino::SetProperty(String property, String value) {
+void ODriveArduino::SetProperty(char* property, char* value) {
     SendStartByte(); SendNLLen();
-    serial_ << "w " << property << " " << value << "\n";
+    serial_ << "w " << property << " " << value << '\n';
 }
 
 /**
@@ -29,7 +29,7 @@ void ODriveArduino::SetProperty(String property, String value) {
  * @param property Property to query
  * NOTE: You must somehow handle the reponse from the ODrive separately
  */
-void ODriveArduino::ReadProperty(String property) {
+void ODriveArduino::ReadProperty(char* property) {
     SendStartByte(); SendNLLen();
     serial_ << "r " << property << "\n";
 }
@@ -39,8 +39,10 @@ void ODriveArduino::ReadProperty(String property) {
  * @param current_lim Current limit
  */
 void ODriveArduino::SetCurrentLims(float current_lim) {
-    SetProperty("axis0.motor.config.current_lim", String(current_lim));
-    SetProperty("axis1.motor.config.current_lim", String(current_lim));
+    SendStartByte(); SendNLLen();
+    serial_ << "w axis0.motor.config.current_lim " << current_lim << "\n";
+    SendStartByte(); SendNLLen();
+    serial_ << "w axis1.motor.config.current_lim " << current_lim << "\n";
 }
 
 /**

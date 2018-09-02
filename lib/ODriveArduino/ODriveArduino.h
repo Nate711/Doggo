@@ -31,8 +31,8 @@ public:
     void SetVelocity(int motor_number, float velocity);
     void SetVelocity(int motor_number, float velocity, float current_feedforward);
 
-    void SetProperty(String property, String value);
-    void ReadProperty(String property);
+    void SetProperty(char* property, char* value);
+    void ReadProperty(char* property);
     void QueryVBusVoltage();
 
     void SetCurrentLims(float current_lim);
