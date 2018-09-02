@@ -131,10 +131,7 @@ void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, 
     float L = 0.0;
     CartesianToLegParams(x, y, leg_direction, L, theta);
     GetGamma(L, theta, gamma);
-    Serial.print(theta);
-    Serial.print(" ");
-    Serial.print(gamma);
-    Serial.print('\n');
+    // Serial << "Th, Gam: " << theta << " " << gamma << '\n';
 }
 
 void CoupledMoveLeg(ODriveArduino& odrive, float t, struct GaitParams params, float gait_offset, float leg_direction, struct LegGain gains) {

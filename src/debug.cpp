@@ -20,13 +20,13 @@ THD_FUNCTION(PrintDebugThread, arg) {
         // }
 
         // Print odrv0 positions
-        Serial  << "M0, M1, feedback time: " ;
-        Serial  << global_debug_values.odrv0.axis0.pos_estimate ;
-        Serial  << "\t" ;
-        Serial  << global_debug_values.odrv0.axis1.pos_estimate ;
-        Serial  << "\t" ;
-        Serial  << global_debug_values.feedback_loop_time;
-        Serial  << "\n";
+        // Serial  << "M0, M1, feedback time: " ;
+        // Serial  << global_debug_values.odrv0.axis0.pos_estimate ;
+        // Serial  << "\t" ;
+        // Serial  << global_debug_values.odrv0.axis1.pos_estimate ;
+        // Serial  << "\t" ;
+        // Serial  << global_debug_values.feedback_loop_time;
+        // Serial  << "\n";
 
         count++;
         chThdSleepMilliseconds(1000/DEBUG_PRINT_FREQ);
