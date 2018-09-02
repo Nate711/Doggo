@@ -17,6 +17,9 @@ THD_WORKING_AREA(waPositionControlThread, 512);
 THD_FUNCTION(PositionControlThread, arg) {
     (void)arg;
 
+    odrv0Interface.SetCurrentLims(5.0f);
+    odrv1Interface.SetCurrentLims(2.5f);
+
     while(true) {
         // ODrivePosControl();
         // sinTrajectoryPosControl();

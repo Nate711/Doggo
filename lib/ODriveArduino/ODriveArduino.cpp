@@ -13,6 +13,37 @@ ODriveArduino::ODriveArduino(HardwareSerial& serial)
 : serial_(serial) {}
 
 /**
+ * Set an ODrive property from the Teensy
+ * @param property The ODrive property to set
+ * @param value    The value for the property
+ *
+ * Example: odrv0.SetProperty("axis0.motor.config.current_lim", "5.0f");
+ */
+void ODriveArduino::SetProperty(String property, String value) {
+    SendStartByte(); SendNLLen();
+    serial_ << "w " << property << " " << value << "\n";
+}
+
+/**
+ * Read an ODrive property from the Teensy
+ * @param property Property to query
+ * NOTE: You must somehow handle the reponse from the ODrive separately
+ */
+void ODriveArduino::ReadProperty(String property) {
+    SendStartByte(); SendNLLen();
+    serial_ << "r " << property << "\n";
+}
+
+/**
+ * Set the current limits for both motors.
+ * @param current_lim Current limit
+ */
+void ODriveArduino::SetCurrentLims(float current_lim) {
+    SetProperty("axis0.motor.config.current_lim", String(current_lim));
+    SetProperty("axis1.motor.config.current_lim", String(current_lim));
+}
+
+/**
  * Send a message to the odrive that tells it to send back the vbus voltage
  * Working as of 7/7/18
  */
