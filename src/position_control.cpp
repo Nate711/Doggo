@@ -59,7 +59,7 @@ void HipAngleToCartesian(float alpha, float beta, float& x, float& y) {
 * Takes the leg parameters and returns the gamma angle (rad) of the legs
 */
 void GetGamma(float L, float theta, float& gamma) {
-    float L1 = 0.09; // upper leg length (m) what is it actually?
+    float L1 = 0.09; // upper leg length (m)
     float L2 = 0.162; // lower leg length (m)
     float cos_param = (pow(L1,2.0) + pow(L,2.0) - pow(L2,2.0)) / (2.0*L1*L);
     if (cos_param < -1.0) {
@@ -100,7 +100,7 @@ void LegParamsToCartesian(float L, float theta, float leg_direction, float& x, f
 * Converts the cartesian coords x, y (m) to leg params L (m), theta (rad)
 */
 void CartesianToLegParams(float x, float y, float leg_direction, float& L, float& theta) {
-    L = pow( (pow(x,2.0) + pow(y,2.0)) ,0.5);
+    L = pow((pow(x,2.0) + pow(y,2.0)), 0.5);
     theta = atan2(leg_direction * x, y);
 }
 
@@ -137,6 +137,39 @@ void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, 
     Serial.print('\n');
 }
 
+bool isValidGaitParams(struct GaitParams params) {
+    const float maxL = 0.25;
+    const float minL = 0.08;
+
+    float stanceHeight = params.stanceHeight;
+    float downAMP = params.downAMP;
+    float upAMP = params.upAMP;
+    float flightPercent = params.flightPercent;
+    float stepLength = params.stepLength;
+    float FREQ = params.FREQ;
+
+    if (stanceHeight + downAMP > maxL || sqrt(pow(stanceHeight, 2) + pow(stepLength / 2.0, 2)) > maxL) {
+        Serial.println("Gait overextends leg");
+        return false;
+    }
+    if (stanceHeight - upAMP < minL) {
+        Serial.println("Gait underextends leg");
+        return false;
+    }
+
+    if (flightPercent <= 0 || flightPercent > 1.0) {
+        Serial.println("Flight percent is invalid");
+        return false;
+    }
+
+    if (FREQ < 0) {
+        Serial.println("Frequency cannot be negative");
+        return false;
+    }
+
+    return true;
+}
+
 void CoupledMoveLeg(ODriveArduino& odrive, float t, struct GaitParams params, float gait_offset, float leg_direction, struct LegGain gains) {
     float theta;
     float gamma;
@@ -148,6 +181,10 @@ void CoupledMoveLeg(ODriveArduino& odrive, float t, struct GaitParams params, fl
 }
 
 void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float leg2_offset, float leg3_offset, struct LegGain gains) {
+    if (!isValidGaitParams(params)) {
+        return; // gait function will not run with invalid parameters
+    }
+
     float t = millis()/1000.0;
 
     const float leg0_direction = -1.0;
