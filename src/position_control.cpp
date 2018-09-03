@@ -26,12 +26,15 @@ THD_FUNCTION(PositionControlThread, arg) {
         if(ShouldExecuteJump()) {
             ExecuteJump();
         } else {
-            trot();
+            gait(gaitParams, 0.0, 0.5, 0.0, 0.5, gaitGains);
         }
 
         chThdSleepMicroseconds(1000000/POSITION_CONTROL_FREQ);
     }
 }
+
+struct GaitParams gaitParams = {0.15, 0.0, 0.05, 0.35, 0.0, 2.0};
+struct LegGain gaitGains = {200, 0.5, 200, 0.5};
 
 /**
  * Set the current limits on both motors for all the odrives
@@ -150,7 +153,7 @@ void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, 
     float L = 0.0;
     CartesianToLegParams(x, y, leg_direction, L, theta);
     GetGamma(L, theta, gamma);
-    // Serial << "Th, Gam: " << theta << " " << gamma << '\n';
+    Serial << "Th, Gam: " << theta << " " << gamma << '\n';
 }
 
 bool isValidGaitParams(struct GaitParams params) {

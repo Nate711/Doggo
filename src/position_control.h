@@ -32,4 +32,7 @@ struct GaitParams {
     float FREQ = 1.0; // Frequency of one gait cycle (Hz)
 };
 
+extern struct GaitParams gaitParams;
+extern struct LegGain gaitGains;
+
 #endif
