@@ -20,10 +20,8 @@ THD_FUNCTION(USBSerialThread, arg) {
             char c = Serial.read();
             if (c == ' ' || c == '\n') {
                 cmd[pos] = '\0';
-                Serial << "cmd " << cmd << "\n";
                 InterpretCommand(cmd);
                 pos = 0;
-                Serial.println("Success");
             } else {
                 cmd[pos++] = c;
             }
@@ -37,7 +35,6 @@ void InterpretCommand(char* cmd) {
     char c;
     float f;
     sscanf(cmd, "%c%f", &c, &f);
-    Serial << c << " " << f << "\n";
     switch(c) {
         case 'F':
             gaitParams.FREQ = f;
