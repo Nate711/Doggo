@@ -21,6 +21,7 @@ void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float 
 void trot();
 void pronk();
 void bound();
+void SetODriveCurrentLimits(float limit);
 
 struct GaitParams {
     float stanceHeight = 0.18; // Desired height of body from ground during walking (m)

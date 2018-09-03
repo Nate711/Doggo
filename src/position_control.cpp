@@ -17,18 +17,34 @@ THD_WORKING_AREA(waPositionControlThread, 512);
 THD_FUNCTION(PositionControlThread, arg) {
     (void)arg;
 
-    odrv0Interface.SetCurrentLims(5.0f);
-    odrv1Interface.SetCurrentLims(2.5f);
+    SetODriveCurrentLimits(20.0f);
 
     while(true) {
         // ODrivePosControl();
         // sinTrajectoryPosControl();
+
         if(ShouldExecuteJump()) {
             ExecuteJump();
+        } else {
+            trot();
         }
+
         chThdSleepMicroseconds(1000000/POSITION_CONTROL_FREQ);
     }
 }
+
+/**
+ * Set the current limits on both motors for all the odrives
+ * @param limit Current limit
+ * NOTE: sometimes a motor doesn't actually receive the command
+ */
+void SetODriveCurrentLimits(float limit) {
+    odrv0Interface.SetCurrentLims(limit);
+    odrv1Interface.SetCurrentLims(limit);
+    odrv2Interface.SetCurrentLims(limit);
+    odrv3Interface.SetCurrentLims(limit);
+}
+
 
 /**
 * All the conversions between the different coordinates are given below, we can move them to whatever file we want.
@@ -215,7 +231,7 @@ void pronk() {
 */
 void bound() {
     // {stanceHeight, downAMP, upAMP, flightPercent, stepLength, FREQ}
-    struct GaitParams params = {0.15, 0.0, 0.05, 0.35, 0.0, 1.0};
+    struct GaitParams params = {0.15, 0.0, 0.05, 0.35, 0.0, 2.0};
     struct LegGain gains = {120, 0.48, 80, 0.48};
     gait(params, 0.0, 0.5, 0.5, 0.0, gains);
 }
@@ -225,7 +241,7 @@ void bound() {
 */
 void trot() {
     // {stanceHeight, downAMP, upAMP, flightPercent, stepLength, FREQ}
-    struct GaitParams params = {0.18, 0.0, 0.06, 0.6, 0.0, 2.0};
-    struct LegGain gains = {120, 0.48, 80, 0.48};
+    struct GaitParams params = {0.15, 0.0, 0.05, 0.35, 0.0, 2.0};
+    struct LegGain gains = {200, 1.0, 200, 1.0};
     gait(params, 0.0, 0.5, 0.0, 0.5, gains);
 }
