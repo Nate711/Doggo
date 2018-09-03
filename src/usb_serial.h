@@ -6,4 +6,6 @@
 extern THD_WORKING_AREA(waUSBSerialThread, 128);
 extern THD_FUNCTION(USBSerialThread, arg);
 
+void InterpretCommand(char* cmd);
+
 #endif
