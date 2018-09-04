@@ -40,19 +40,19 @@ void InterpretCommand(char* cmd) {
             gaitParams.FREQ = f;
             break;
         case 'l':
-            gaitParams.stepLength = f;
+            gaitParams.step_length = f;
             break;
         case 'h':
-            gaitParams.stanceHeight = f;
+            gaitParams.stance_height = f;
             break;
         case 'u':
-            gaitParams.upAMP = f;
+            gaitParams.up_AMP = f;
             break;
         case 'd':
-            gaitParams.downAMP = f;
+            gaitParams.down_AMP = f;
             break;
         case 'p':
-            gaitParams.flightPercent = f;
+            gaitParams.flight_percent = f;
         case 'g':
             sscanf(cmd, "g%f,%f,%f,%f", &(gaitGains.kp_theta), &(gaitGains.kd_theta), &(gaitGains.kp_gamma), &(gaitGains.kd_gamma));
             break;

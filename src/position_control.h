@@ -24,11 +24,11 @@ void bound();
 void SetODriveCurrentLimits(float limit);
 
 struct GaitParams {
-    float stanceHeight = 0.18; // Desired height of body from ground during walking (m)
-    float downAMP = 0.00; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
-    float upAMP = 0.06; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
-    float flightPercent = 0.6; // Portion of the gait time should be doing the down portion of trajectory
-    float stepLength = 0.0; // Length of entire step (m)
+    float stance_height = 0.18; // Desired height of body from ground during walking (m)
+    float down_AMP = 0.00; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
+    float up_AMP = 0.06; // Height the foot peaks at above the stanceHeight in sinusoidal trajectory (m)
+    float flight_percent = 0.6; // Portion of the gait time should be doing the down portion of trajectory
+    float step_length = 0.0; // Length of entire step (m)
     float FREQ = 1.0; // Frequency of one gait cycle (Hz)
 };
 

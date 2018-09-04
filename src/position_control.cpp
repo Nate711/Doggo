@@ -33,6 +33,7 @@ THD_FUNCTION(PositionControlThread, arg) {
     }
 }
 
+// {stance_height, down_AMP, up_AMP, flight_percent, step_length, FREQ}
 struct GaitParams gaitParams = {0.15, 0.0, 0.05, 0.35, 0.0, 2.0};
 struct LegGain gaitGains = {200, 0.5, 200, 0.5};
 
@@ -130,11 +131,11 @@ void CartesianToLegParams(float x, float y, float leg_direction, float& L, float
 * Sinusoidal trajectory generator function with flexibility from parameters described below. Can do 4-beat, 2-beat, trotting, etc with this.
 */
 void SinTrajectory (float t, struct GaitParams params, float gaitOffset, float& x, float& y) {
-    float stanceHeight = params.stanceHeight;
-    float downAMP = params.downAMP;
-    float upAMP = params.upAMP;
-    float flightPercent = params.flightPercent;
-    float stepLength = params.stepLength;
+    float stanceHeight = params.stance_height;
+    float downAMP = params.down_AMP;
+    float upAMP = params.up_AMP;
+    float flightPercent = params.flight_percent;
+    float stepLength = params.step_length;
     float FREQ = params.FREQ;
 
     float gp = fmod((FREQ*t+gaitOffset),1.0); // mod(a,m) returns remainder division of a by m
@@ -160,11 +161,11 @@ bool isValidGaitParams(struct GaitParams params) {
     const float maxL = 0.25;
     const float minL = 0.08;
 
-    float stanceHeight = params.stanceHeight;
-    float downAMP = params.downAMP;
-    float upAMP = params.upAMP;
-    float flightPercent = params.flightPercent;
-    float stepLength = params.stepLength;
+    float stanceHeight = params.stance_height;
+    float downAMP = params.down_AMP;
+    float upAMP = params.up_AMP;
+    float flightPercent = params.flight_percent;
+    float stepLength = params.step_length;
     float FREQ = params.FREQ;
 
     if (stanceHeight + downAMP > maxL || sqrt(pow(stanceHeight, 2) + pow(stepLength / 2.0, 2)) > maxL) {
