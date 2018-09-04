@@ -4,7 +4,6 @@
 #include "position_control.h"
 
 // Privates
-bool execute_jump_ = false;
 float start_time_ = 0.0f;
 
 /**
@@ -13,13 +12,7 @@ float start_time_ = 0.0f;
  */
 void StartJump(float start_time_s) {
     start_time_ = start_time_s;
-    execute_jump_ = true;
-}
-/**
- * Query if a jump should be executed
- */
-bool ShouldExecuteJump() {
-    return execute_jump_;
+    state = JUMP;
 }
 
 /**
@@ -82,7 +75,7 @@ void ExecuteJump() {
         CommandAllLegs(theta, gamma, gains);
         Serial << "Retract: +" << t << "s, y: " << y;
     } else {
-        execute_jump_ = false;
+        state = STOP;
         Serial.println("Jump Complete.");
     }
     Serial << '\n';

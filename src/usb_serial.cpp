@@ -36,7 +36,7 @@ void InterpretCommand(char* cmd) {
     float f;
     sscanf(cmd, "%c%f", &c, &f);
     switch(c) {
-        case 'F':
+        case 'f':
             gaitParams.FREQ = f;
             break;
         case 'l':
@@ -56,7 +56,13 @@ void InterpretCommand(char* cmd) {
         case 'g':
             sscanf(cmd, "g%f,%f,%f,%f", &(gaitGains.kp_theta), &(gaitGains.kd_theta), &(gaitGains.kp_gamma), &(gaitGains.kd_gamma));
             break;
-        case 'j':
+        case 'S':
+            state = STOP;
+            break;
+        case 'G':
+            state = GAIT;
+            break;
+        case 'J':
             StartJump(millis()/1000.0f);
             Serial.println("Jump");
             break;

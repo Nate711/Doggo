@@ -20,18 +20,23 @@ THD_FUNCTION(PositionControlThread, arg) {
     SetODriveCurrentLimits(20.0f);
 
     while(true) {
-        // ODrivePosControl();
-        // sinTrajectoryPosControl();
 
-        if(ShouldExecuteJump()) {
-            ExecuteJump();
-        } else {
-            gait(gaitParams, 0.0, 0.5, 0.0, 0.5, gaitGains);
+        switch(state) {
+            case STOP:
+                break;
+            case GAIT:
+                gait(gaitParams, 0.0, 0.5, 0.0, 0.5, gaitGains);
+                break;
+            case JUMP:
+                ExecuteJump();
+                break;
         }
 
         chThdSleepMicroseconds(1000000/POSITION_CONTROL_FREQ);
     }
 }
+
+States state = STOP;
 
 // {stance_height, down_AMP, up_AMP, flight_percent, step_length, FREQ}
 struct GaitParams gaitParams = {0.15, 0.0, 0.05, 0.35, 0.0, 2.0};

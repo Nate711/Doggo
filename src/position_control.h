@@ -23,6 +23,14 @@ void pronk();
 void bound();
 void SetODriveCurrentLimits(float limit);
 
+enum States {
+    STOP,
+    GAIT,
+    JUMP
+};
+
+extern States state;
+
 struct GaitParams {
     float stance_height = 0.18; // Desired height of body from ground during walking (m)
     float down_AMP = 0.00; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
