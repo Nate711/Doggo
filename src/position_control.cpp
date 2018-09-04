@@ -136,6 +136,9 @@ void CartesianToLegParams(float x, float y, float leg_direction, float& L, float
 * Sinusoidal trajectory generator function with flexibility from parameters described below. Can do 4-beat, 2-beat, trotting, etc with this.
 */
 void SinTrajectory (float t, struct GaitParams params, float gaitOffset, float& x, float& y) {
+    static float p = 0;
+    static float prev_t = 0;
+
     float stanceHeight = params.stance_height;
     float downAMP = params.down_AMP;
     float upAMP = params.up_AMP;
@@ -143,7 +146,10 @@ void SinTrajectory (float t, struct GaitParams params, float gaitOffset, float& 
     float stepLength = params.step_length;
     float FREQ = params.FREQ;
 
-    float gp = fmod((FREQ*t+gaitOffset),1.0); // mod(a,m) returns remainder division of a by m
+    p += FREQ * (t - prev_t);
+    prev_t = t;
+
+    float gp = fmod((p+gaitOffset),1.0); // mod(a,m) returns remainder division of a by m
     if (gp <= flightPercent) {
         x = (gp/flightPercent)*stepLength - stepLength/2.0;
         y = -upAMP*sin(PI*gp/flightPercent) + stanceHeight;
