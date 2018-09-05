@@ -184,7 +184,7 @@ bool IsValidLegGain(struct LegGain gains) {
     // check for underdamping -> instability
     bad = bad || (gains.kp_theta > 200 && gains.kd_theta < 0.1);
     bad = bad || (gains.kp_gamma > 200 && gains.kd_gamma < 0.1);
-    return bad;
+    return !bad;
 }
 
 bool IsValidGaitParams(struct GaitParams params) {
