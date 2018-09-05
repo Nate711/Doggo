@@ -15,7 +15,8 @@ void CartesianToLegParams(float x, float y, float leg_direction, float& L, float
 void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, float& gamma);
 void SinTrajectory (float t, struct GaitParams params, float gaitOffset, float& x, float& y);
 void CoupledMoveLeg(ODriveArduino& odrive, float t, struct GaitParams params, float gait_offset, float leg_direction, struct LegGain gains);
-bool isValidGaitParams(struct GaitParams params);
+bool IsValidGaitParams(struct GaitParams params);
+bool IsValidLegGain(struct LegGain gain);
 void SinTrajectoryPosControl();
 void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float leg2_offset, float leg3_offset, struct LegGain gains);
 void trot();
@@ -40,7 +41,7 @@ struct GaitParams {
     float FREQ = 1.0; // Frequency of one gait cycle (Hz)
 };
 
-extern struct GaitParams gaitParams;
-extern struct LegGain gaitGains;
+extern struct GaitParams gait_params;
+extern struct LegGain gait_gains;
 
 #endif

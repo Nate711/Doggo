@@ -25,7 +25,7 @@ THD_FUNCTION(PositionControlThread, arg) {
             case STOP:
                 break;
             case GAIT:
-                gait(gaitParams, 0.0, 0.5, 0.0, 0.5, gaitGains);
+                gait(gait_params, 0.0, 0.5, 0.0, 0.5, gait_gains);
                 break;
             case JUMP:
                 ExecuteJump();
@@ -39,8 +39,8 @@ THD_FUNCTION(PositionControlThread, arg) {
 States state = STOP;
 
 // {stance_height, down_AMP, up_AMP, flight_percent, step_length, FREQ}
-struct GaitParams gaitParams = {0.15, 0.0, 0.05, 0.35, 0.0, 2.0};
-struct LegGain gaitGains = {200, 0.5, 200, 0.5};
+struct GaitParams gait_params = {0.15, 0.0, 0.05, 0.35, 0.0, 2.0};
+struct LegGain gait_gains = {200, 0.5, 200, 0.5};
 
 /**
  * Set the current limits on both motors for all the odrives
@@ -168,7 +168,26 @@ void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, 
     Serial << "Th, Gam: " << theta << " " << gamma << '\n';
 }
 
-bool isValidGaitParams(struct GaitParams params) {
+/**
+ * Performs sanity checks on the odrive coupled gains to prevent obvious
+ * and dangerous instabilities.
+ * @param  gains LegGain to check
+ * @return       True if valid gains, false if invalid
+ */
+bool IsValidLegGain(struct LegGain gains) {
+    // check for unstable gains
+    bool bad =  gains.kp_theta < 0 || gains.kd_theta < 0 ||
+                gains.kp_gamma < 0 || gains.kd_gamma < 0;
+    // check for instability / sensor noise amplification
+    bad = bad || gains.kp_theta > 320 || gains.kd_theta > 10 ||
+                 gains.kp_gamma > 320 || gains.kd_gamma > 10;
+    // check for underdamping -> instability
+    bad = bad || (gains.kp_theta > 200 && gains.kd_theta < 0.1);
+    bad = bad || (gains.kp_gamma > 200 && gains.kd_gamma < 0.1);
+    return bad;
+}
+
+bool IsValidGaitParams(struct GaitParams params) {
     const float maxL = 0.25;
     const float minL = 0.08;
 
@@ -212,24 +231,25 @@ void CoupledMoveLeg(ODriveArduino& odrive, float t, struct GaitParams params, fl
 }
 
 void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float leg2_offset, float leg3_offset, struct LegGain gains) {
-    if (!isValidGaitParams(params)) {
+    if (IsValidGaitParams(params) && IsValidLegGain(gains)) {
+        float t = millis()/1000.0;
+
+        const float leg0_direction = -1.0;
+        CoupledMoveLeg(odrv0Interface, t, params, leg0_offset, leg0_direction, gains);
+
+        const float leg1_direction = -1.0;
+        CoupledMoveLeg(odrv1Interface, t, params, leg1_offset, leg1_direction, gains);
+
+        const float leg2_direction = 1.0;
+        CoupledMoveLeg(odrv2Interface, t, params, leg2_offset, leg2_direction, gains);
+
+        const float leg3_direction = 1.0;
+        CoupledMoveLeg(odrv3Interface, t, params, leg3_offset, leg3_direction, gains);
+    } else {
         return; // gait function will not run with invalid parameters
     }
-
-    float t = millis()/1000.0;
-
-    const float leg0_direction = -1.0;
-    CoupledMoveLeg(odrv0Interface, t, params, leg0_offset, leg0_direction, gains);
-
-    const float leg1_direction = -1.0;
-    CoupledMoveLeg(odrv1Interface, t, params, leg1_offset, leg1_direction, gains);
-
-    const float leg2_direction = 1.0;
-    CoupledMoveLeg(odrv2Interface, t, params, leg2_offset, leg2_direction, gains);
-
-    const float leg3_direction = 1.0;
-    CoupledMoveLeg(odrv3Interface, t, params, leg3_offset, leg3_direction, gains);
 }
+
 
 /**
 * Pronk gait parameters
