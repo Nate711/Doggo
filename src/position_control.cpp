@@ -220,9 +220,21 @@ bool IsValidGaitParams(struct GaitParams params) {
     return true;
 }
 
-void CoupledMoveLeg(ODriveArduino& odrive, float t, struct GaitParams params, float gait_offset, float leg_direction, struct LegGain gains) {
-    float theta;
-    float gamma;
+/**
+ * Command the given odrive along a sinusoidal trajectry.
+ * TODO finish documentation
+ * @param odrive        [description]
+ * @param t             [description]
+ * @param params        [description]
+ * @param gait_offset   [description]
+ * @param leg_direction [description]
+ * @param gains         [description]
+ * @param theta         [description]
+ * @param gamma         [description]
+ */
+void CoupledMoveLeg(ODriveArduino& odrive, float t, struct GaitParams params,
+                    float gait_offset, float leg_direction, struct LegGain gains,
+                    float& theta, float& gamma) {
     float x; // float x for leg 0 to be set by the sin trajectory
     float y;
     SinTrajectory(t, params, gait_offset, x, y);
@@ -230,21 +242,29 @@ void CoupledMoveLeg(ODriveArduino& odrive, float t, struct GaitParams params, fl
     odrive.SetCoupledPosition(theta, gamma, gains);
 }
 
-void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float leg2_offset, float leg3_offset, struct LegGain gains) {
+void gait(struct GaitParams params,
+                float leg0_offset, float leg1_offset,
+                float leg2_offset, float leg3_offset,
+                struct LegGain gains) {
+
     if (IsValidGaitParams(params) && IsValidLegGain(gains)) {
         float t = millis()/1000.0;
 
         const float leg0_direction = -1.0;
-        CoupledMoveLeg(odrv0Interface, t, params, leg0_offset, leg0_direction, gains);
+        CoupledMoveLeg(odrv0Interface, t, params, leg0_offset, leg0_direction, gains,
+            global_debug_values.odrv0.sp_theta, global_debug_values.odrv0.sp_gamma);
 
         const float leg1_direction = -1.0;
-        CoupledMoveLeg(odrv1Interface, t, params, leg1_offset, leg1_direction, gains);
+        CoupledMoveLeg(odrv1Interface, t, params, leg1_offset, leg1_direction, gains,
+            global_debug_values.odrv1.sp_theta, global_debug_values.odrv1.sp_gamma);
 
         const float leg2_direction = 1.0;
-        CoupledMoveLeg(odrv2Interface, t, params, leg2_offset, leg2_direction, gains);
+        CoupledMoveLeg(odrv2Interface, t, params, leg2_offset, leg2_direction, gains,
+            global_debug_values.odrv2.sp_theta, global_debug_values.odrv2.sp_gamma);
 
         const float leg3_direction = 1.0;
-        CoupledMoveLeg(odrv3Interface, t, params, leg3_offset, leg3_direction, gains);
+        CoupledMoveLeg(odrv3Interface, t, params, leg3_offset, leg3_direction, gains,
+            global_debug_values.odrv3.sp_theta, global_debug_values.odrv3.sp_gamma);
     } else {
         return; // gait function will not run with invalid parameters
     }

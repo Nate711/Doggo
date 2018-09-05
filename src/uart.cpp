@@ -111,14 +111,13 @@ THD_FUNCTION(SerialThread, arg) {
 }
 
 /**
- * Parse a dual position message and store the result in the odrive struct
+ * Parse a theta/gamma message from odrv0 and store the result in the odrive struct
  * @param msg char* : message
  * @param len int   : message length
  *
  * TODO: make it generalizable to other odrives and other odriveInterfaces
  */
 void ProcessPositionMsg(char* msg, int len) {
-    // only print the message if DEBUG is defined above
 #ifdef DEBUG_LOW
     Serial.print("MSG RECEIVED: ");
     for(int i=0; i<len; i++) {
@@ -126,26 +125,22 @@ void ProcessPositionMsg(char* msg, int len) {
     }
     Serial << "\n";
 #endif
+
 #ifdef DEBUG_HIGH
     Serial <<  "rcv at: " << micros() << '\n';
 #endif
 
-    float m0,m1;
-    int result = odrv0Interface.ParseDualPosition(msg, len, m0, m1);
+    float th,ga;
+    int result = odrv0Interface.ParseDualPosition(msg, len, th, ga);
     // result: 1 means success, -1 means didn't get proper message
     if (result == 1) {
-        // Update raw counts
-        odrv0.axis0.pos_estimate = m0;
-        odrv0.axis1.pos_estimate = m1;
+        // Update theta and gamma
+        global_debug_values.odrv0.est_theta = th;
+        global_debug_values.odrv0.est_gamma = ga;
 
 #ifdef DEBUG_LOW
-        Serial << "M0,M1 inc: " << m0 << " " << m1 << '\n';
+        Serial << "Th,Ga: " << th << " " << ga << '\n';
 #endif
-
-        // TODO: this calculation of absolute pos is in the wrong function / scope
-        // Update absolute positions
-        odrv0.axis0.abs_pos_estimate = m0 + odrv0.axis0.ENCODER_OFFSET;
-        odrv0.axis1.abs_pos_estimate = m1 + odrv0.axis1.ENCODER_OFFSET;
 
         // NOTE: it's possible that the feedback delay is wrong if an old
         // encoder reading took so long to come back that it came back after
@@ -155,19 +150,22 @@ void ProcessPositionMsg(char* msg, int len) {
         // 3) Teensy receives reading E1
         // 4) Teensy thinks delay was E1-I2 when in reality it was E1 - I1
         // This problem won't happen if the delay is short and the control rate is small
+        //
         latest_receive_timestamp = micros();
-        global_debug_values.feedback_loop_time = latest_receive_timestamp - latest_send_timestamp;
+        global_debug_values.position_reply_time = latest_receive_timestamp - latest_send_timestamp;
+
 #ifdef DEBUG_HIGH
         Serial << "Done prs at: " << micros() << '\n';
-        Serial << "Comm loop(uS): " << global_debug_values.feedback_loop_time << "\n";
+        Serial << "Reply time (uS): " << global_debug_values.position_reply_time << "\n";
         // NOTE: As of 7/7/18 code, around 1500us from send to receive
 #endif
+
     } else {
-        // TODO put a debug flag somewhere, otherwise printing messages like
-        // these will probably screw things up
+
 #ifdef DEBUG_LOW
         Serial.println("Parse failed. Wrong message length or bad checksum.");
 #endif
+
     }
 }
 
