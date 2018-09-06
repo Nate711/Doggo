@@ -5,6 +5,7 @@
 #include "config.h"
 #include "jump.h"
 #include "position_control.h"
+#include "probe.h"
 
 THD_WORKING_AREA(waUSBSerialThread, 2048);
 
@@ -76,6 +77,11 @@ void InterpretCommand(char* cmd) {
         case 'J':
             StartJump(millis()/1000.0f);
             Serial.println("JUMP");
+            break;
+        case 'P':
+            StartProbe();
+            state = PROBE;
+            Serial.println("PROBE");
             break;
         case 'T':
             state = TEST;
