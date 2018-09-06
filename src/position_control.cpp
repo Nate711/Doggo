@@ -331,10 +331,10 @@ void test() {
 
     /* Sinusoidal upwards force test */
     float low = 20.0f; // corresponds to 2.62A if error is pi/6
-    float high = 180.0f; // corresponds to 31.42A if error is pi/6
+    float high = 80.0f; // corresponds to 31.42A if error is pi/6
     float mid = (low + high)/2.0f;
     float amp = high - mid;
-    struct LegGain gains = {0.0, 0.0, low + (high-low) * (millis()/2000) % 2, 0.5};
+    struct LegGain gains = {0.0, 0.0, low + (high-low) * ((int)(millis()/2000) % 2), 0.5};
     odrv0Interface.SetCoupledPosition(0, 2.0*PI/3.0, gains);
     odrv0Interface.ReadCurrents();
 

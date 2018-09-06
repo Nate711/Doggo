@@ -247,32 +247,7 @@ void ODriveArduino::SetCoupledPosition(float sp_theta, float sp_gamma, struct Le
 }
 
 void ODriveArduino::SetCoupledPosition(struct LegGain gains) {
-
-    const int POS_MULTIPLIER = 1000;
-    const int GAIN_MULTIPLIER = 100;
-
-    int16_t kp_theta_16 = (gains.kp_theta * GAIN_MULTIPLIER);
-    int16_t kd_theta_16 = (gains.kd_theta * GAIN_MULTIPLIER);
-
-    int16_t kp_gamma_16 = (gains.kp_gamma * GAIN_MULTIPLIER);
-    int16_t kd_gamma_16 = (gains.kd_gamma * GAIN_MULTIPLIER);
-
-    // Calculate the checksum based on the 2 current value shorts
-    uint8_t checkSum = 'S';
-    checkSum ^= XorShort(kp_theta_16);
-    checkSum ^= XorShort(kd_theta_16);
-    checkSum ^= XorShort(kp_gamma_16);
-    checkSum ^= XorShort(kd_gamma_16);
-
-    // Send off bytes
-    SendStartByte(); // send start byte
-    SendByte(14); // payload length
-    SendByte('S'); // dual current command
-    SendShort(kp_theta_16);
-    SendShort(kd_theta_16);
-    SendShort(kp_gamma_16);
-    SendShort(kd_gamma_16);
-    SendByte(checkSum);
+    // TODO: correct but where S command doesn't get enough parameters
 }
 
 /**
