@@ -67,16 +67,20 @@ void InterpretCommand(char* cmd) {
             break;
         case 'S':
             state = STOP;
+            Serial.println("STOP");
             break;
         case 'G':
             state = GAIT;
+            Serial.println("GAIT");
             break;
         case 'J':
             StartJump(millis()/1000.0f);
-            Serial.println("Jump");
+            Serial.println("JUMP");
             break;
         case 'T':
             state = TEST;
+            Serial.println("TEST");
+            break;
         default:
             Serial.println("Unknown command");
     }
