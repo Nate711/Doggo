@@ -45,6 +45,13 @@ void ODriveArduino::SetCurrentLims(float current_lim) {
     serial_ << "w axis1.motor.config.current_lim " << current_lim << "\n";
 }
 
+void ODriveArduino::ReadCurrents() {
+    SendStartByte(); SendNLLen();
+    serial_ << "r axis0.motor.current_control.Iq_measured\n";
+    SendStartByte(); SendNLLen();
+    serial_ << "r axis1.motor.current_control.Iq_measured\n";
+}
+
 /**
  * Send a message to the odrive that tells it to send back the vbus voltage
  * Working as of 7/7/18

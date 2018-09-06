@@ -143,8 +143,8 @@ void setup() {
 // Prints the number of idle cycles and maximum delay every 1 second.
 void loop() {
     while (true) {
-        Serial << "Idle thd execs, max micros btn idle: \t";
-        Serial << count << "," << maxDelay << "\n";
+        // Serial << "Idle thd execs, max micros btn idle: \t";
+        // Serial << count << "," << maxDelay << "\n";
         count = 0;
         maxDelay = 0;
 

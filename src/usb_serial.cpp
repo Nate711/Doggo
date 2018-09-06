@@ -75,6 +75,8 @@ void InterpretCommand(char* cmd) {
             StartJump(millis()/1000.0f);
             Serial.println("Jump");
             break;
+        case 'T':
+            state = TEST;
         default:
             Serial.println("Unknown command");
     }

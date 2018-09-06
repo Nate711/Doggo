@@ -23,11 +23,13 @@ void trot();
 void pronk();
 void bound();
 void SetODriveCurrentLimits(float limit);
+void test();
 
 enum States {
     STOP,
     GAIT,
-    JUMP
+    JUMP,
+    TEST
 };
 
 extern States state;

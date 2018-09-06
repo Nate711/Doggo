@@ -17,7 +17,7 @@ THD_WORKING_AREA(waPositionControlThread, 512);
 THD_FUNCTION(PositionControlThread, arg) {
     (void)arg;
 
-    SetODriveCurrentLimits(20.0f);
+    SetODriveCurrentLimits(40.0f);
 
     while(true) {
 
@@ -29,6 +29,9 @@ THD_FUNCTION(PositionControlThread, arg) {
                 break;
             case JUMP:
                 ExecuteJump();
+                break;
+            case TEST:
+                test();
                 break;
         }
 
@@ -165,7 +168,7 @@ void CartesianToThetaGamma(float x, float y, float leg_direction, float& theta, 
     float L = 0.0;
     CartesianToLegParams(x, y, leg_direction, L, theta);
     GetGamma(L, theta, gamma);
-    Serial << "Th, Gam: " << theta << " " << gamma << '\n';
+    //Serial << "Th, Gam: " << theta << " " << gamma << '\n';
 }
 
 /**
@@ -299,4 +302,10 @@ void trot() {
     struct GaitParams params = {0.15, 0.0, 0.05, 0.35, 0.0, 2.0};
     struct LegGain gains = {200, 1.0, 200, 1.0};
     gait(params, 0.0, 0.5, 0.0, 0.5, gains);
+}
+
+void test() {
+    struct LegGain gains = {0.0, 0.0, 42.0 + 38.0 * sin(millis()/2000.0), 0.5};
+    odrv0Interface.SetCoupledPosition(0, 2.0*PI/3.0, gains);
+    odrv0Interface.readCurrents();
 }

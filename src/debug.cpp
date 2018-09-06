@@ -20,14 +20,14 @@ THD_FUNCTION(PrintDebugThread, arg) {
         // }
 
         // Print leg positions
-        PrintODriveDebugInfo(global_debug_values.odrv0);
-        Serial << "\t";
-        PrintODriveDebugInfo(global_debug_values.odrv1);
-        Serial << "\t";
-        PrintODriveDebugInfo(global_debug_values.odrv2);
-        Serial << "\t";
-        PrintODriveDebugInfo(global_debug_values.odrv3);
-        Serial.println();
+        // PrintODriveDebugInfo(global_debug_values.odrv0);
+        // Serial << "\t";
+        // PrintODriveDebugInfo(global_debug_values.odrv1);
+        // Serial << "\t";
+        // PrintODriveDebugInfo(global_debug_values.odrv2);
+        // Serial << "\t";
+        // PrintODriveDebugInfo(global_debug_values.odrv3);
+        // Serial.println();
 
         chThdSleepMilliseconds(1000/DEBUG_PRINT_FREQ);
     }

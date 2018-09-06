@@ -36,6 +36,7 @@ public:
     void QueryVBusVoltage();
 
     void SetCurrentLims(float current_lim);
+    void ReadCurrents();
 
     // Protocol functions
     int ParseDualPosition(char* msg, int len, float& m0, float& m1);
