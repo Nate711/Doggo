@@ -17,7 +17,9 @@ THD_WORKING_AREA(waPositionControlThread, 512);
 THD_FUNCTION(PositionControlThread, arg) {
     (void)arg;
 
-    SetODriveCurrentLimits(40.0f);
+    SetODriveCurrentLimits(CURRENT_LIM);
+    chThdSleepMilliseconds(100);
+    SetODriveCurrentLimits(CURRENT_LIM);
 
     while(true) {
 
@@ -181,13 +183,25 @@ bool IsValidLegGain(struct LegGain gains) {
     // check for unstable gains
     bool bad =  gains.kp_theta < 0 || gains.kd_theta < 0 ||
                 gains.kp_gamma < 0 || gains.kd_gamma < 0;
+    if (bad) {
+        Serial.println("Invalid gains: <0");
+        return false;
+    }
     // check for instability / sensor noise amplification
     bad = bad || gains.kp_theta > 320 || gains.kd_theta > 10 ||
                  gains.kp_gamma > 320 || gains.kd_gamma > 10;
+    if (bad) {
+        Serial.println("Invalid gains: too high.");
+        return false;
+    }
     // check for underdamping -> instability
     bad = bad || (gains.kp_theta > 200 && gains.kd_theta < 0.1);
     bad = bad || (gains.kp_gamma > 200 && gains.kd_gamma < 0.1);
-    return !bad;
+    if (bad) {
+        Serial.println("Invalid gains: underdamped");
+        return false;
+    }
+    return true;
 }
 
 bool IsValidGaitParams(struct GaitParams params) {
@@ -305,7 +319,23 @@ void trot() {
 }
 
 void test() {
-    struct LegGain gains = {0.0, 0.0, 42.0 + 38.0 * sin(millis()/2000.0), 0.5};
+    /* Downwards force test */
+    // struct LegGain gains = {0.0, 0.0, 40.0, 0.5};
+    // odrv0Interface.SetCoupledPosition(0, PI/3.0f, gains);
+    // odrv0Interface.ReadCurrents();
+
+    /* Upwards weight test */
+    // struct LegGain gains = {0.0, 0.0, 40.0, 0.5};
+    // odrv0Interface.SetCoupledPosition(0, 2.0f*PI/3.0f, gains);
+    // odrv0Interface.ReadCurrents();
+
+    /* Sinusoidal upwards force test */
+    float low = 10.0f; // corresponds to 2.62A if error is pi/6
+    float high = 120.0f; // corresponds to 31.42A if error is pi/6
+    float mid = (low + high)/2.0f;
+    float amp = high - mid;
+    struct LegGain gains = {0.0, 0.0, mid + amp * sin(millis()/2000.0), 0.5};
     odrv0Interface.SetCoupledPosition(0, 2.0*PI/3.0, gains);
     odrv0Interface.ReadCurrents();
+
 }

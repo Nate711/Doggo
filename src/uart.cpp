@@ -170,5 +170,6 @@ void ProcessPositionMsg(char* msg, int len) {
 }
 
 void ProcessNLMessage(char* msg, size_t len) {
-    Serial << "Received NL message: " << msg;
+    Serial << msg;
+    // Serial << "Received NL message: " << msg;
 }

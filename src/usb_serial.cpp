@@ -37,31 +37,40 @@ void InterpretCommand(char* cmd) {
     sscanf(cmd, "%c%f", &c, &f);
     switch(c) {
         case 'f':
+            Serial << "Set freq. to: " << f << "\n";
             gait_params.FREQ = f;
             break;
         case 'l':
+            Serial << "Set stride len to: " << f << "\n";
             gait_params.step_length = f;
             break;
         case 'h':
+            Serial << "Set stance ht. to: " << f << "\n";
             gait_params.stance_height = f;
             break;
         case 'u':
+            Serial << "Set up amp. to: " << f << "\n";
             gait_params.up_AMP = f;
             break;
         case 'd':
+            Serial << "Set down amp. to: " << f << "\n";
             gait_params.down_AMP = f;
             break;
         case 'p':
+            Serial << "Set flt. perc. to: " << f << "\n";
             gait_params.flight_percent = f;
         case 'g':
             { // Have to create a new scope here in order to declare variables
                 float kp_t, kd_t, kp_g, kd_g;
                 int res = sscanf(cmd, "g%f,%f,%f,%f", &kp_t, &kd_t, &kp_g, &kd_g);
                 if (res == 4) {
+                    Serial << "Set gains to: " << kp_t << " " << kd_t << " " << kp_g << " " << kd_g << "\n";
                     gait_gains.kp_theta = kp_t;
                     gait_gains.kd_theta = kd_t;
                     gait_gains.kp_gamma = kp_g;
                     gait_gains.kd_gamma = kd_g;
+                } else {
+                    Serial.println("Invalid gain format.");
                 }
             }
             break;

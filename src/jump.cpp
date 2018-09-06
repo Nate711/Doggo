@@ -52,7 +52,7 @@ void ExecuteJump() {
         // Use gains with small stiffness and lots of damping
         struct LegGain gains = {50, 1.0, 50, 1.0};
         CommandAllLegs(theta,gamma,gains);
-        Serial << "Prep: +" << t << "s, y: " << y;
+        // Serial << "Prep: +" << t << "s, y: " << y;
     } else if (t >= prep_time && t < prep_time + launch_time) {
         float x = 0;
         float y = jump_extension;
@@ -62,7 +62,7 @@ void ExecuteJump() {
         // Use high stiffness and low damping to execute the jump
         struct LegGain gains = {160, 0.5, 160, 0.3};
         CommandAllLegs(theta, gamma, gains);
-        Serial << "Jump: +" << t << "s, y: " << y;
+        // Serial << "Jump: +" << t << "s, y: " << y;
     } else if (t >= prep_time + launch_time && t < prep_time + launch_time + fall_time) {
         float x = 0;
         float y = fall_extension;
@@ -73,12 +73,12 @@ void ExecuteJump() {
         struct LegGain gains = {50, 1.0, 50, 1.0};
 
         CommandAllLegs(theta, gamma, gains);
-        Serial << "Retract: +" << t << "s, y: " << y;
+        // Serial << "Retract: +" << t << "s, y: " << y;
     } else {
         state = STOP;
         Serial.println("Jump Complete.");
     }
-    Serial << '\n';
+    // Serial << '\n';
 }
 
 void CommandAllLegs(float theta, float gamma, LegGain gains) {
@@ -86,4 +86,12 @@ void CommandAllLegs(float theta, float gamma, LegGain gains) {
     odrv1Interface.SetCoupledPosition(theta, gamma, gains);
     odrv2Interface.SetCoupledPosition(theta, gamma, gains);
     odrv3Interface.SetCoupledPosition(theta, gamma, gains);
+    global_debug_values.odrv0.sp_theta = theta;
+    global_debug_values.odrv0.sp_gamma = gamma;
+    global_debug_values.odrv1.sp_theta = theta;
+    global_debug_values.odrv1.sp_gamma = gamma;
+    global_debug_values.odrv2.sp_theta = theta;
+    global_debug_values.odrv2.sp_gamma = gamma;
+    global_debug_values.odrv3.sp_theta = theta;
+    global_debug_values.odrv3.sp_gamma = gamma;
 }

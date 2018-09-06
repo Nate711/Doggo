@@ -34,5 +34,5 @@ THD_FUNCTION(PrintDebugThread, arg) {
 }
 
 void PrintODriveDebugInfo(struct ODrive odrv) {
-    Serial << odrv.sp_theta << " " << odrv.sp_gamma;
+    Serial << odrv.sp_theta << "\t" << odrv.sp_gamma;
 }
