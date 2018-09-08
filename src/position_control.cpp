@@ -25,6 +25,10 @@ THD_FUNCTION(PositionControlThread, arg) {
 
         switch(state) {
             case STOP:
+                {
+                    struct LegGain stop_gain = {80, 0.5, 80, 0.5};
+                    CommandAllLegs(0.0f, PI/2.0f, stop_gain);
+                }
                 break;
             case GAIT:
                 gait(gait_params, 0.0, 0.5, 0.0, 0.5, gait_gains);
@@ -287,6 +291,20 @@ void gait(struct GaitParams params,
         global_debug_values.odrv3.sp_theta, global_debug_values.odrv3.sp_gamma);
 }
 
+void CommandAllLegs(float theta, float gamma, LegGain gains) {
+    odrv0Interface.SetCoupledPosition(theta, gamma, gains);
+    odrv1Interface.SetCoupledPosition(theta, gamma, gains);
+    odrv2Interface.SetCoupledPosition(theta, gamma, gains);
+    odrv3Interface.SetCoupledPosition(theta, gamma, gains);
+    global_debug_values.odrv0.sp_theta = theta;
+    global_debug_values.odrv0.sp_gamma = gamma;
+    global_debug_values.odrv1.sp_theta = theta;
+    global_debug_values.odrv1.sp_gamma = gamma;
+    global_debug_values.odrv2.sp_theta = theta;
+    global_debug_values.odrv2.sp_gamma = gamma;
+    global_debug_values.odrv3.sp_theta = theta;
+    global_debug_values.odrv3.sp_gamma = gamma;
+}
 
 /**
 * Pronk gait parameters
@@ -330,8 +348,8 @@ void test() {
     // odrv0Interface.ReadCurrents();
 
     /* Sinusoidal upwards force test */
-    float low = 20.0f; // corresponds to 2.62A if error is pi/6
-    float high = 80.0f; // corresponds to 31.42A if error is pi/6
+    float low = 20.0f; // corresponds to 5.23A if error is pi/6
+    float high = 80.0f; // corresponds to 20.94A if error is pi/6
     float mid = (low + high)/2.0f;
     float amp = high - mid;
     struct LegGain gains = {0.0, 0.0, low + (high-low) * ((int)(millis()/2000) % 2), 0.5};

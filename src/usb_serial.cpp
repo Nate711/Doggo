@@ -18,7 +18,7 @@ THD_FUNCTION(USBSerialThread, arg) {
     while(true) {
         while(Serial.available()) {
             char c = Serial.read();
-            if (c == ' ' || c == '\n') {
+            if (c == ';' || c == '\n') {
                 cmd[pos] = '\0';
                 InterpretCommand(cmd);
                 pos = 0;
@@ -34,35 +34,48 @@ THD_FUNCTION(USBSerialThread, arg) {
 void InterpretCommand(char* cmd) {
     char c;
     float f;
-    sscanf(cmd, "%c%f", &c, &f);
+    // Note: Putting a space in front of %c allows you type commands like:
+    // f 2.0; l 0.01; h 0.08
+    int num_parsed = sscanf(cmd, " %c %f", &c, &f);
+    if (num_parsed < 1) {
+        Serial.println("Invalid command");
+        return;
+    }
     switch(c) {
+        // Change gait frequency
         case 'f':
             Serial << "Set freq. to: " << f << "\n";
             gait_params.FREQ = f;
             break;
+        // Change stride length
         case 'l':
             Serial << "Set stride len to: " << f << "\n";
             gait_params.step_length = f;
             break;
+        // Change stance height
         case 'h':
             Serial << "Set stance ht. to: " << f << "\n";
             gait_params.stance_height = f;
             break;
+        // Change gait up amplitude
         case 'u':
             Serial << "Set up amp. to: " << f << "\n";
             gait_params.up_AMP = f;
             break;
+        // Change gait down amplitude
         case 'd':
             Serial << "Set down amp. to: " << f << "\n";
             gait_params.down_AMP = f;
             break;
+        // Change gait flight percent
         case 'p':
             Serial << "Set flt. perc. to: " << f << "\n";
             gait_params.flight_percent = f;
+        // Change leg gains
         case 'g':
             { // Have to create a new scope here in order to declare variables
                 float kp_t, kd_t, kp_g, kd_g;
-                int res = sscanf(cmd, "g%f,%f,%f,%f", &kp_t, &kd_t, &kp_g, &kd_g);
+                int res = sscanf(cmd, "g %f %f %f %f", &kp_t, &kd_t, &kp_g, &kd_g);
                 if (res == 4) {
                     Serial << "Set gains to: " << kp_t << " " << kd_t << " " << kp_g << " " << kd_g << "\n";
                     gait_gains.kp_theta = kp_t;
@@ -74,18 +87,28 @@ void InterpretCommand(char* cmd) {
                 }
             }
             break;
+        // Toggle debug printing
+        case 'D':
+            enable_debug = !enable_debug;
+            Serial << "Debug printing: " << enable_debug << "\n";
+            break;
+        // Switch into STOP state
         case 'S':
             state = STOP;
             Serial.println("STOP");
             break;
+        // Switch into GAIT state
         case 'G':
             state = GAIT;
             Serial.println("GAIT");
+            PrintGaitCommands();
             break;
+        // Switch into JUMP state
         case 'J':
             StartJump(millis()/1000.0f);
             Serial.println("JUMP");
             break;
+        // Switch into TEST state
         case 'T':
             state = TEST;
             Serial.println("TEST");
@@ -93,4 +116,19 @@ void InterpretCommand(char* cmd) {
         default:
             Serial.println("Unknown command");
     }
+}
+
+void PrintGaitCommands() {
+    Serial.println("Available gait commands:");
+    Serial.println("(f)req");
+    Serial.println("stride (l)ength");
+    Serial.println("stance (h)eight");
+    Serial.println("(d)own amplitude");
+    Serial.println("(u)p amplitude");
+    Serial.println("flight (p)ercent");
+}
+
+void PrintStates() {
+    Serial.println("STATES: (G)ait, (S)top, (T)est, (J)ump");
+    Serial.println("Toggle (D)ebug");
 }

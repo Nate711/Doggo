@@ -80,18 +80,3 @@ void ExecuteJump() {
     }
     // Serial << '\n';
 }
-
-void CommandAllLegs(float theta, float gamma, LegGain gains) {
-    odrv0Interface.SetCoupledPosition(theta, gamma, gains);
-    odrv1Interface.SetCoupledPosition(theta, gamma, gains);
-    odrv2Interface.SetCoupledPosition(theta, gamma, gains);
-    odrv3Interface.SetCoupledPosition(theta, gamma, gains);
-    global_debug_values.odrv0.sp_theta = theta;
-    global_debug_values.odrv0.sp_gamma = gamma;
-    global_debug_values.odrv1.sp_theta = theta;
-    global_debug_values.odrv1.sp_gamma = gamma;
-    global_debug_values.odrv2.sp_theta = theta;
-    global_debug_values.odrv2.sp_gamma = gamma;
-    global_debug_values.odrv3.sp_theta = theta;
-    global_debug_values.odrv3.sp_gamma = gamma;
-}

@@ -42,3 +42,5 @@ volatile long latest_receive_timestamp = 0;
 
 // Struct to hold information helpful for debugging/printing to serial monitor
 struct DebugValues global_debug_values;
+
+bool enable_debug = false;

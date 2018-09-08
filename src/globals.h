@@ -55,4 +55,6 @@ struct DebugValues {
 
 extern struct DebugValues global_debug_values;
 
+extern bool enable_debug;
+
 #endif

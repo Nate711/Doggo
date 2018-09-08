@@ -19,20 +19,24 @@ THD_FUNCTION(PrintDebugThread, arg) {
         //     count = 0;
         // }
 
-        // Print leg positions
-        // PrintODriveDebugInfo(global_debug_values.odrv0);
-        // Serial << "\t";
-        // PrintODriveDebugInfo(global_debug_values.odrv1);
-        // Serial << "\t";
-        // PrintODriveDebugInfo(global_debug_values.odrv2);
-        // Serial << "\t";
-        // PrintODriveDebugInfo(global_debug_values.odrv3);
-        // Serial.println();
+        if (enable_debug) {
+            // Print leg positions
+            PrintODriveDebugInfo(global_debug_values.odrv0);
+            Serial << '\t';
+            PrintODriveDebugInfo(global_debug_values.odrv1);
+            Serial << '\t';
+            PrintODriveDebugInfo(global_debug_values.odrv2);
+            Serial << '\t';
+            PrintODriveDebugInfo(global_debug_values.odrv3);
+            Serial.println();
+        }
 
         chThdSleepMilliseconds(1000/DEBUG_PRINT_FREQ);
     }
 }
 
 void PrintODriveDebugInfo(struct ODrive odrv) {
-    Serial << odrv.sp_theta << "\t" << odrv.sp_gamma;
+    Serial.print(odrv.sp_theta, 2);
+    Serial.print('\t');
+    Serial.print(odrv.sp_gamma, 2);
 }

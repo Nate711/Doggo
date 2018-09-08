@@ -14,8 +14,8 @@
 
 // Important: Thread execution frequencies
 #define POSITION_CONTROL_FREQ 100
-#define DEBUG_PRINT_FREQ 10
-#define UART_FREQ 20000
+#define DEBUG_PRINT_FREQ 20
+#define UART_FREQ 2000
 #define USB_SERIAL_FREQ 100
 
 #define CURRENT_LIM 40.0f

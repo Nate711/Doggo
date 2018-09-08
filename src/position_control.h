@@ -24,6 +24,7 @@ void pronk();
 void bound();
 void SetODriveCurrentLimits(float limit);
 void test();
+void CommandAllLegs(float theta, float gamma, struct LegGain gains);
 
 enum States {
     STOP,
