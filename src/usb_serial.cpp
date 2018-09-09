@@ -125,7 +125,7 @@ void PrintGaitCommands() {
     Serial.println("stance (h)eight");
     Serial.println("(d)own amplitude");
     Serial.println("(u)p amplitude");
-    Serial.println("flight (p)ercent");
+    Serial.println("flight (p)roportion");
 }
 
 void PrintStates() {

@@ -31,7 +31,8 @@ THD_FUNCTION(PositionControlThread, arg) {
                 }
                 break;
             case GAIT:
-                gait(gait_params, 0.0, 0.5, 0.0, 0.5, gait_gains);
+                // gait(gait_params, 0.0, 0.5, 0.0, 0.5, gait_gains);
+                gait(gait_params, 0.0, 0.75, 0.25, 0.5, gait_gains);
                 break;
             case JUMP:
                 ExecuteJump();
@@ -47,9 +48,9 @@ THD_FUNCTION(PositionControlThread, arg) {
 
 States state = STOP;
 
-// {stance_height, down_AMP, up_AMP, flight_percent, step_length, FREQ}
-struct GaitParams gait_params = {0.15, 0.0, 0.05, 0.35, 0.0, 2.0};
-struct LegGain gait_gains = {200, 0.5, 200, 0.5};
+// {stance_height, down_AMP, up_AMP, flight_percent (proportion), step_length, FREQ}
+struct GaitParams gait_params = {0.17, 0.04, 0.06, 0.35, 0.0, 2.0};
+struct LegGain gait_gains = {80, 0.5, 50, 0.5};
 
 /**
  * Set the current limits on both motors for all the odrives
@@ -331,8 +332,8 @@ void bound() {
 */
 void trot() {
     // {stanceHeight, downAMP, upAMP, flightPercent, stepLength, FREQ}
-    struct GaitParams params = {0.15, 0.0, 0.05, 0.35, 0.0, 2.0};
-    struct LegGain gains = {200, 1.0, 200, 1.0};
+    struct GaitParams params = {0.17, 0.04, 0.06, 0.35, 0.10, 2.0};
+    struct LegGain gains = {80, 0.5, 50, 0.5};
     gait(params, 0.0, 0.5, 0.0, 0.5, gains);
 }
 
