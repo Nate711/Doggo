@@ -27,12 +27,23 @@ THD_FUNCTION(PositionControlThread, arg) {
             case STOP:
                 {
                     struct LegGain stop_gain = {80, 0.5, 80, 0.5};
-                    CommandAllLegs(0.0f, PI/2.0f, stop_gain);
+                    float y1 = gait_params.stance_height;
+                    float y2 = gait_params.stance_height;// + gait_params.down_AMP;
+                    float theta1, gamma1, theta2, gamma2;
+                    CartesianToThetaGamma(0.0, y1, 1, theta1, gamma1);
+                    CartesianToThetaGamma(0.0, y2, 1, theta2, gamma2);
+                    odrv0Interface.SetCoupledPosition(theta2, gamma2, stop_gain);
+                    odrv1Interface.SetCoupledPosition(theta1, gamma1, stop_gain);
+                    odrv2Interface.SetCoupledPosition(theta1, gamma1, stop_gain);
+                    odrv3Interface.SetCoupledPosition(theta2, gamma2, stop_gain);
                 }
                 break;
             case GAIT:
-                // gait(gait_params, 0.0, 0.5, 0.0, 0.5, gait_gains);
-                gait(gait_params, 0.0, 0.75, 0.25, 0.5, gait_gains);
+                // bound();
+                // gait(gait_params, 0.0, 0.5, 0.5, 0.0, gait_gains);
+
+                gait(gait_params, 0.0, 0.5, 0.0, 0.5, gait_gains);
+                // gait(gait_params, 0.0, 0.75, 0.25, 0.5, gait_gains);
                 break;
             case JUMP:
                 ExecuteJump();
@@ -49,7 +60,7 @@ THD_FUNCTION(PositionControlThread, arg) {
 States state = STOP;
 
 // {stance_height, down_AMP, up_AMP, flight_percent (proportion), step_length, FREQ}
-struct GaitParams gait_params = {0.17, 0.04, 0.06, 0.35, 0.0, 2.0};
+struct GaitParams gait_params = {0.17, 0.04, 0.06, 0.35, 0.15, 2.5};
 struct LegGain gait_gains = {80, 0.5, 50, 0.5};
 
 /**
@@ -322,8 +333,8 @@ void pronk() {
 */
 void bound() {
     // {stanceHeight, downAMP, upAMP, flightPercent, stepLength, FREQ}
-    struct GaitParams params = {0.15, 0.0, 0.05, 0.35, 0.0, 2.0};
-    struct LegGain gains = {120, 0.48, 80, 0.48};
+    struct GaitParams params = {0.17, 0.04, 0.06, 0.35, 0.0, 2.0};
+    struct LegGain gains = {80, 0.5, 50, 0.5};
     gait(params, 0.0, 0.5, 0.5, 0.0, gains);
 }
 
