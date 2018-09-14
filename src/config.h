@@ -18,7 +18,7 @@
 #define UART_FREQ 2000
 #define USB_SERIAL_FREQ 100
 
-#define CURRENT_LIM 40.0f
+#define CURRENT_LIM 90.0f
 
 
 //------------------------------------------------------------------------------

@@ -34,11 +34,11 @@ void ExecuteJump() {
     // min radius = 0.8
     // max radius = 0.25
     const float prep_time = 0.5f; // Duration before jumping [s]
-    const float launch_time = 0.2f ; // Duration before retracting the leg [s]
+    const float launch_time = 0.8f ; // Duration before retracting the leg [s]
     const float fall_time = 1.0f; //Duration after retracting leg to go back to normal behavior [s]
 
-    const float stance_height = 0.09f; // Desired leg extension before the jump [m]
-    const float jump_extension = 0.24f; // Maximum leg extension in [m]
+    const float stance_height = 0.081f; // Desired leg extension before the jump [m]
+    const float jump_extension = 0.249f; // Maximum leg extension in [m]
     const float fall_extension = 0.13f; // Desired leg extension during fall [m]
 
     float t = millis()/1000.0f - start_time_; // Seconds since jump was commanded
@@ -60,7 +60,7 @@ void ExecuteJump() {
         CartesianToThetaGamma(x, y, 1.0, theta, gamma);
 
         // Use high stiffness and low damping to execute the jump
-        struct LegGain gains = {160, 0.5, 160, 0.3};
+        struct LegGain gains = {240, 0.5, 240, 0.2};
         CommandAllLegs(theta, gamma, gains);
         // Serial << "Jump: +" << t << "s, y: " << y;
     } else if (t >= prep_time + launch_time && t < prep_time + launch_time + fall_time) {
