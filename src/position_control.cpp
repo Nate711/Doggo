@@ -38,12 +38,20 @@ THD_FUNCTION(PositionControlThread, arg) {
                     odrv3Interface.SetCoupledPosition(theta2, gamma2, stop_gain);
                 }
                 break;
-            case GAIT:
-                // bound();
-                // gait(gait_params, 0.0, 0.5, 0.5, 0.0, gait_gains);
-
+            case DANCE:
                 gait(gait_params, 0.0, 0.5, 0.0, 0.5, gait_gains);
-                // gait(gait_params, 0.0, 0.75, 0.25, 0.5, gait_gains);
+                break;
+            case BOUND:
+                gait(gait_params, 0.0, 0.5, 0.5, 0.0, gait_gains);
+                break;
+            case TROT:
+                gait(gait_params, 0.0, 0.5, 0.0, 0.5, gait_gains);
+                break;
+            case WALK:
+                gait(gait_params, 0.0, 0.75, 0.25, 0.5, gait_gains);
+                break;
+            case PRONK:
+                gait(gait_params, 0.0, 0.0, 0.0, 0.0, gait_gains);
                 break;
             case JUMP:
                 ExecuteJump();
@@ -60,7 +68,7 @@ THD_FUNCTION(PositionControlThread, arg) {
 States state = STOP;
 
 // {stance_height, down_AMP, up_AMP, flight_percent (proportion), step_length, FREQ}
-struct GaitParams gait_params = {0.17, 0.04, 0.06, 0.35, 0.15, 2.5};
+struct GaitParams gait_params = {0.17, 0.04, 0.06, 0.35, 0.0, 2.5};
 struct LegGain gait_gains = {80, 0.5, 50, 0.5};
 
 /**
@@ -77,32 +85,9 @@ void SetODriveCurrentLimits(float limit) {
 
 
 /**
-* All the conversions between the different coordinates are given below, we can move them to whatever file we want.
-* This needs to define global variable for the Hip angles, leg angles, and foot coordinates so the functions are void.
-* We also have to define the upper and lower leg lengths L1 and L2 as global vars
 * Here the Hip angles are assumed to be in radians with a 0 position in the
 * downward y-direction and positive angles CCW.
-* TODO: Make a HipAngles struct with alpha and beta values
-* The x,y cartesian coordinates have the x-direction pointed where the robot is
-* heading and y-direction is positive towards the ground
-* TODO: Make struct with two floats for LegCartesian and give an x,y values
-* The leg length (L) is the virtual leg length and is always positive,
-* the leg angle, theta, is zero in the downward y-direction and positive when
-* going CWW.
-* TODO: Make a struct with L,theta values called LegParams
 */
-
-
-/**
-* Converts the two Hip angles (in radians) for a leg to the cartesian coordinates
-*/
-void HipAngleToCartesian(float alpha, float beta, float& x, float& y) {
-    float L1 = 0.09; // upper leg length (m) what is it actually?
-    float L2 = 0.162; // lower leg length (m)
-    float delta = (beta+alpha+PI)/2.0 - acos(L1/L2*sin((beta-alpha)/2.0));
-    x = L1*cos(alpha) + L2*cos(delta);
-    y = L1*sin(alpha) + L2*sin(delta);
-}
 
 /**
 * Takes the leg parameters and returns the gamma angle (rad) of the legs
@@ -124,16 +109,6 @@ void GetGamma(float L, float theta, float& gamma) {
       } else {
         gamma = acos(cos_param);
       }
-}
-
-/**
-* Converts the two Hip angles (in radians) for a leg into the Hip angles alpha, beta (in rads)
-*/
-void LegParamsToHipAngles(float L, float theta, float& alpha, float& beta) {
-    float gamma;
-    GetGamma(L, theta, gamma);
-    alpha = theta + gamma;
-    beta = theta - gamma;
 }
 
 /**
@@ -161,11 +136,11 @@ void SinTrajectory (float t, struct GaitParams params, float gaitOffset, float& 
     static float prev_t = 0;
 
     float stanceHeight = params.stance_height;
-    float downAMP = params.down_AMP;
-    float upAMP = params.up_AMP;
+    float downAMP = params.down_amp;
+    float upAMP = params.up_amp;
     float flightPercent = params.flight_percent;
     float stepLength = params.step_length;
-    float FREQ = params.FREQ;
+    float FREQ = params.freq;
 
     p += FREQ * (t - prev_t);
     prev_t = t;
@@ -225,11 +200,11 @@ bool IsValidGaitParams(struct GaitParams params) {
     const float minL = 0.08;
 
     float stanceHeight = params.stance_height;
-    float downAMP = params.down_AMP;
-    float upAMP = params.up_AMP;
+    float downAMP = params.down_amp;
+    float upAMP = params.up_amp;
     float flightPercent = params.flight_percent;
     float stepLength = params.step_length;
-    float FREQ = params.FREQ;
+    float FREQ = params.freq;
 
     if (stanceHeight + downAMP > maxL || sqrt(pow(stanceHeight, 2) + pow(stepLength / 2.0, 2)) > maxL) {
         Serial.println("Gait overextends leg");
@@ -247,6 +222,11 @@ bool IsValidGaitParams(struct GaitParams params) {
 
     if (FREQ < 0) {
         Serial.println("Frequency cannot be negative");
+        return false;
+    }
+
+    if (FREQ > 10.0) {
+        Serial.println("Frequency is too high (>10)");
         return false;
     }
 
@@ -319,33 +299,61 @@ void CommandAllLegs(float theta, float gamma, LegGain gains) {
 }
 
 /**
+ * Dance gait parameters
+ */
+void TransitionToDance() {
+    state = DANCE;
+    Serial.println("DANCE");
+    //            {s.h, d.a., u.a., f.p., s.l., fr.}
+    gait_params = {0.15, 0.04, 0.04, 0.75, 0.0, 1.0};
+    gait_gains = {120, 0.48, 80, 0.48};
+    PrintGaitParams();
+}
+/**
 * Pronk gait parameters
 */
-void pronk() {
-    // {stanceHeight, downAMP, upAMP, flightPercent, stepLength, FREQ}
-    struct GaitParams params = {0.12, 0.09, 0.0, 0.9, 0.0, 0.8};
-    struct LegGain gains = {120, 0.48, 80, 0.48};
-    gait(params, 0.0, 0.0, 0.0, 0.0, gains);
-}
-
-/**
-* Trot gait parameters
-*/
-void bound() {
-    // {stanceHeight, downAMP, upAMP, flightPercent, stepLength, FREQ}
-    struct GaitParams params = {0.17, 0.04, 0.06, 0.35, 0.0, 2.0};
-    struct LegGain gains = {80, 0.5, 50, 0.5};
-    gait(params, 0.0, 0.5, 0.5, 0.0, gains);
+void TransitionToPronk() {
+    state = PRONK;
+    Serial.println("PRONK");
+    //            {s.h, d.a., u.a., f.p., s.l., fr.}
+    gait_params = {0.12, 0.09, 0.0, 0.9, 0.0, 0.8};
+    gait_gains = {120, 0.48, 80, 0.48};
+    PrintGaitParams();
 }
 
 /**
 * Bound gait parameters
 */
-void trot() {
-    // {stanceHeight, downAMP, upAMP, flightPercent, stepLength, FREQ}
-    struct GaitParams params = {0.17, 0.04, 0.06, 0.35, 0.10, 2.0};
-    struct LegGain gains = {80, 0.5, 50, 0.5};
-    gait(params, 0.0, 0.5, 0.0, 0.5, gains);
+void TransitionToBound() {
+    state = BOUND;
+    Serial.println("BOUND");
+    //            {s.h, d.a., u.a., f.p., s.l., fr.}
+    gait_params = {0.17, 0.04, 0.06, 0.35, 0.0, 2.0};
+    gait_gains = {80, 0.5, 50, 0.5};
+    PrintGaitParams();
+}
+
+/**
+ * Walk gait parameters
+ */
+void TransitionToWalk() {
+    state = WALK;
+    Serial.println("WALK");
+    //            {s.h, d.a., u.a., f.p., s.l., fr.}
+    gait_params = {0.15, 0.04, 0.0, 0.9, 0.0, 0.8};
+    gait_gains = {80, 0.5, 50, 0.5};
+    PrintGaitParams();
+}
+/**
+* Trot gait parameters
+*/
+void TransitionToTrot() {
+    state = TROT;
+    Serial.println("TROT");
+    //            {s.h, d.a., u.a., f.p., s.l., fr.}
+    gait_params = {0.17, 0.04, 0.06, 0.35, 0.10, 2.0};
+    gait_gains = {80, 0.5, 50, 0.5};
+    PrintGaitParams();
 }
 
 void test() {
@@ -364,8 +372,19 @@ void test() {
     float high = 80.0f; // corresponds to 20.94A if error is pi/6
     float mid = (low + high)/2.0f;
     float amp = high - mid;
-    struct LegGain gains = {0.0, 0.0, low + (high-low) * ((int)(millis()/2000) % 2), 0.5};
+    struct LegGain gains = {0.0, 0.0, low + amp * ((int)(millis()/2000) % 2), 0.5};
     odrv0Interface.SetCoupledPosition(0, 2.0*PI/3.0, gains);
     odrv0Interface.ReadCurrents();
 
+}
+
+void PrintGaitParams() {
+    Serial << ("(f)req") << gait_params.freq << '\n';
+    Serial << ("step (l)ength") << gait_params.step_length << '\n';
+    Serial << ("stance (h)eight") << gait_params.stance_height << '\n';
+    Serial << ("(d)own amplitude") << gait_params.down_amp << '\n';
+    Serial << ("(u)p amplitude") << gait_params.up_amp << '\n';
+    Serial << ("flight (p)roportion") << gait_params.flight_percent << '\n';
+    Serial << "Theta: " << gait_gains.kp_theta << " " << gait_gains.kd_theta << '\n';
+    Serial << "Gamma: " << gait_gains.kp_gamma << " " << gait_gains.kd_gamma << '\n';
 }

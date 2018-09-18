@@ -45,7 +45,7 @@ void InterpretCommand(char* cmd) {
         // Change gait frequency
         case 'f':
             Serial << "Set freq. to: " << f << "\n";
-            gait_params.FREQ = f;
+            gait_params.freq = f;
             break;
         // Change stride length
         case 'l':
@@ -60,17 +60,18 @@ void InterpretCommand(char* cmd) {
         // Change gait up amplitude
         case 'u':
             Serial << "Set up amp. to: " << f << "\n";
-            gait_params.up_AMP = f;
+            gait_params.up_amp = f;
             break;
         // Change gait down amplitude
         case 'd':
             Serial << "Set down amp. to: " << f << "\n";
-            gait_params.down_AMP = f;
+            gait_params.down_amp = f;
             break;
         // Change gait flight percent
         case 'p':
             Serial << "Set flt. perc. to: " << f << "\n";
             gait_params.flight_percent = f;
+            break;
         // Change leg gains
         case 'g':
             { // Have to create a new scope here in order to declare variables
@@ -97,22 +98,37 @@ void InterpretCommand(char* cmd) {
             state = STOP;
             Serial.println("STOP");
             break;
-        // Switch into GAIT state
-        case 'G':
-            state = GAIT;
-            Serial.println("GAIT");
-            PrintGaitCommands();
+        // Switch into DANCE state
+        case 'E':
+            TransitionToDance();
+            break;
+        // Switch into BOUND state
+        case 'B':
+            TransitionToBound();
+            break;
+        // Switch into TROT state
+        case 'T':
+            TransitionToTrot();
+            break;
+        // Switch into WALK state
+        case 'W':
+            TransitionToWalk();
+            break;
+        // Switch into WALK state
+        case 'P':
+            TransitionToPronk();
             break;
         // Switch into JUMP state
         case 'J':
             StartJump(millis()/1000.0f);
             Serial.println("JUMP");
             break;
-        // Switch into TEST state
-        case 'T':
-            state = TEST;
-            Serial.println("TEST");
-            break;
+        // // Switch into TEST state
+        // TODO: Make new character for test mode
+        // case 'T':
+        //     state = TEST;
+        //     Serial.println("TEST");
+        //     break;
         default:
             Serial.println("Unknown command");
     }
@@ -121,7 +137,7 @@ void InterpretCommand(char* cmd) {
 void PrintGaitCommands() {
     Serial.println("Available gait commands:");
     Serial.println("(f)req");
-    Serial.println("stride (l)ength");
+    Serial.println("step (l)ength");
     Serial.println("stance (h)eight");
     Serial.println("(d)own amplitude");
     Serial.println("(u)p amplitude");
@@ -129,6 +145,6 @@ void PrintGaitCommands() {
 }
 
 void PrintStates() {
-    Serial.println("STATES: (G)ait, (S)top, (T)est, (J)ump");
+    Serial.println("STATES: Danc(E), (W)alk, (T)rot, (B)ound, (P)ronk, (S)top, (J)ump");
     Serial.println("Toggle (D)ebug");
 }
