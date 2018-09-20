@@ -363,7 +363,7 @@ void TransitionToHop() {
     state = HOP;
     Serial.println("HOP");
     //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.15, 0.08, 0.05, 0.4, 0, 1.0};
+    gait_params = {0.15, 0.05, 0.05, 0.2, 0, 1.0};
     PrintGaitParams();
 }
 
@@ -397,15 +397,15 @@ void hop(struct GaitParams params) {
 
     CartesianToThetaGamma(0, params.stance_height - params.up_amp, 1, theta, gamma);
     CommandAllLegs(theta, gamma, land_gains);
-    chThdSleepMicroseconds(1000000*0.2*freq);
+    chThdSleepMicroseconds(1000000*0.2/freq);
 
     CartesianToThetaGamma(0, params.stance_height + params.down_amp, 1, theta, gamma);
     CommandAllLegs(theta, gamma, hop_gains);
-    chThdSleepMicroseconds(1000000*params.flight_percent*freq);
+    chThdSleepMicroseconds(1000000*params.flight_percent/freq);
 
     CartesianToThetaGamma(0, params.stance_height, 1, theta, gamma);
     CommandAllLegs(theta, gamma, land_gains);
-    chThdSleepMicroseconds(1000000*(0.8-params.flight_percent)*freq);
+    chThdSleepMicroseconds(1000000*(0.8-params.flight_percent)/freq);
 
 
 }
