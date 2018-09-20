@@ -123,6 +123,9 @@ void InterpretCommand(char* cmd) {
             StartJump(millis()/1000.0f);
             Serial.println("JUMP");
             break;
+        case 'H':
+            TransitionToHop();
+            break;
         // // Switch into TEST state
         // TODO: Make new character for test mode
         // case 'T':

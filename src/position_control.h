@@ -22,9 +22,11 @@ void TransitionToWalk();
 void TransitionToTrot();
 void TransitionToPronk();
 void TransitionToBound();
+void TransitionToHop();
 void PrintGaitParams();
 void SetODriveCurrentLimits(float limit);
 void test();
+void hop(struct GaitParams params);
 void CommandAllLegs(float theta, float gamma, struct LegGain gains);
 
 enum States {
@@ -35,6 +37,7 @@ enum States {
     WALK,
     PRONK,
     JUMP,
+    HOP,
     TEST
 };
 
