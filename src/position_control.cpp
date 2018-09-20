@@ -391,8 +391,8 @@ void test() {
 
 void hop(struct GaitParams params) {
     float freq = params.freq;
-    struct LegGain hop_gains = {80, 1, 80, 1};
-    struct LegGain land_gains = {20, 2, 20, 2};
+    struct LegGain hop_gains = {120, 1, 80, 1};
+    struct LegGain land_gains = {120, 2, 20, 2};
     float theta, gamma;
 
     CartesianToThetaGamma(0, params.stance_height - params.up_amp, 1, theta, gamma);
