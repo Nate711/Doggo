@@ -118,6 +118,9 @@ void InterpretCommand(char* cmd) {
         case 'P':
             TransitionToPronk();
             break;
+        case 'R':
+            TransitionToRotate();
+            break;
         // Switch into JUMP state
         case 'J':
             StartJump(millis()/1000.0f);

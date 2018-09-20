@@ -22,6 +22,7 @@ void TransitionToWalk();
 void TransitionToTrot();
 void TransitionToPronk();
 void TransitionToBound();
+void TransitionToRotate();
 void PrintGaitParams();
 void SetODriveCurrentLimits(float limit);
 void test();
@@ -35,7 +36,8 @@ enum States {
     WALK,
     PRONK,
     JUMP,
-    TEST
+    TEST,
+    ROTATE
 };
 
 extern States state;
@@ -51,5 +53,6 @@ struct GaitParams {
 
 extern struct GaitParams gait_params;
 extern struct LegGain gait_gains;
+extern long rotate_start; // milliseconds when rotate was commanded
 
 #endif

@@ -26,16 +26,16 @@ THD_FUNCTION(PositionControlThread, arg) {
         switch(state) {
             case STOP:
                 {
-                    struct LegGain stop_gain = {80, 0.5, 80, 0.5};
+                    // struct LegGain stop_gain = {80, 0.5, 80, 0.5};
                     float y1 = gait_params.stance_height;
                     float y2 = gait_params.stance_height;// + gait_params.down_AMP;
                     float theta1, gamma1, theta2, gamma2;
                     CartesianToThetaGamma(0.0, y1, 1, theta1, gamma1);
                     CartesianToThetaGamma(0.0, y2, 1, theta2, gamma2);
-                    odrv0Interface.SetCoupledPosition(theta2, gamma2, stop_gain);
-                    odrv1Interface.SetCoupledPosition(theta1, gamma1, stop_gain);
-                    odrv2Interface.SetCoupledPosition(theta1, gamma1, stop_gain);
-                    odrv3Interface.SetCoupledPosition(theta2, gamma2, stop_gain);
+                    odrv0Interface.SetCoupledPosition(theta2, gamma2, gait_gains);
+                    odrv1Interface.SetCoupledPosition(theta1, gamma1, gait_gains);
+                    odrv2Interface.SetCoupledPosition(theta1, gamma1, gait_gains);
+                    odrv3Interface.SetCoupledPosition(theta2, gamma2, gait_gains);
                 }
                 break;
             case DANCE:
@@ -48,13 +48,23 @@ THD_FUNCTION(PositionControlThread, arg) {
                 gait(gait_params, 0.0, 0.5, 0.0, 0.5, gait_gains);
                 break;
             case WALK:
-                gait(gait_params, 0.0, 0.75, 0.25, 0.5, gait_gains);
+                gait(gait_params, 0.0, 0.25, 0.75, 0.5, gait_gains);
                 break;
             case PRONK:
                 gait(gait_params, 0.0, 0.0, 0.0, 0.0, gait_gains);
                 break;
             case JUMP:
                 ExecuteJump();
+                break;
+            case ROTATE:
+                {
+                float theta,gamma;
+                CartesianToThetaGamma(0, 0.24, 1.0, theta, gamma);
+                float freq = 0.1;
+                float phase = freq * (millis() - rotate_start)/1000.0f;
+                theta = (-cos(2*PI * phase) + 1.0f) * 0.5 * 2 * PI;
+                CommandAllLegs(theta, gamma, gait_gains);
+                }
                 break;
             case TEST:
                 test();
@@ -64,7 +74,7 @@ THD_FUNCTION(PositionControlThread, arg) {
         chThdSleepMicroseconds(1000000/POSITION_CONTROL_FREQ);
     }
 }
-
+long rotate_start = 0; // milliseconds when rotate was commanded
 States state = STOP;
 
 // {stance_height, down_AMP, up_AMP, flight_percent (proportion), step_length, FREQ}
@@ -316,8 +326,8 @@ void TransitionToPronk() {
     state = PRONK;
     Serial.println("PRONK");
     //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.12, 0.09, 0.0, 0.9, 0.0, 0.8};
-    gait_gains = {120, 0.48, 80, 0.48};
+    gait_params = {0.12, 0.05, 0.0, 0.75, 0.0, 1.0};
+    gait_gains = {80, 0.50, 50, 0.50};
     PrintGaitParams();
 }
 
@@ -340,7 +350,7 @@ void TransitionToWalk() {
     state = WALK;
     Serial.println("WALK");
     //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.15, 0.04, 0.0, 0.9, 0.0, 0.8};
+    gait_params = {0.15, 0.00, 0.06, 0.25, 0.0, 1.5};
     gait_gains = {80, 0.5, 50, 0.5};
     PrintGaitParams();
 }
@@ -351,8 +361,16 @@ void TransitionToTrot() {
     state = TROT;
     Serial.println("TROT");
     //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.17, 0.04, 0.06, 0.35, 0.10, 2.0};
+    gait_params = {0.17, 0.04, 0.06, 0.35, 0.15, 2.0};
     gait_gains = {80, 0.5, 50, 0.5};
+    PrintGaitParams();
+}
+
+void TransitionToRotate() {
+    state = ROTATE;
+    rotate_start = millis();
+    Serial.println("ROTATE");
+    gait_gains = {30,0.5,30,0.5};
     PrintGaitParams();
 }
 
@@ -379,12 +397,12 @@ void test() {
 }
 
 void PrintGaitParams() {
-    Serial << ("(f)req") << gait_params.freq << '\n';
-    Serial << ("step (l)ength") << gait_params.step_length << '\n';
-    Serial << ("stance (h)eight") << gait_params.stance_height << '\n';
-    Serial << ("(d)own amplitude") << gait_params.down_amp << '\n';
-    Serial << ("(u)p amplitude") << gait_params.up_amp << '\n';
-    Serial << ("flight (p)roportion") << gait_params.flight_percent << '\n';
+    Serial << ("(f)req: ") << gait_params.freq << '\n';
+    Serial << ("step (l)ength: ") << gait_params.step_length << '\n';
+    Serial << ("stance (h)eight: ") << gait_params.stance_height << '\n';
+    Serial << ("(d)own amplitude: ") << gait_params.down_amp << '\n';
+    Serial << "(u)p amplitude: " << gait_params.up_amp << '\n';
+    Serial << ("flight (p)roportion: ") << gait_params.flight_percent << '\n';
     Serial << "Theta: " << gait_gains.kp_theta << " " << gait_gains.kd_theta << '\n';
     Serial << "Gamma: " << gait_gains.kp_gamma << " " << gait_gains.kd_gamma << '\n';
 }
