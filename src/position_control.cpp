@@ -56,7 +56,6 @@ THD_FUNCTION(PositionControlThread, arg) {
             case JUMP:
                 ExecuteJump();
                 break;
-<<<<<<< HEAD
             case ROTATE:
                 {
                 float theta,gamma;
@@ -66,10 +65,8 @@ THD_FUNCTION(PositionControlThread, arg) {
                 theta = (-cos(2*PI * phase) + 1.0f) * 0.5 * 2 * PI;
                 CommandAllLegs(theta, gamma, gait_gains);
                 }
-=======
             case HOP:
                 hop(gait_params);
->>>>>>> e1ab67d6b5ec6c0d59156e6282f22b6635408995
                 break;
             case TEST:
                 test();
@@ -376,7 +373,7 @@ void TransitionToRotate() {
     rotate_start = millis();
     Serial.println("ROTATE");
     gait_gains = {30,0.5,30,0.5};
-
+}
 void TransitionToHop() {
     state = HOP;
     Serial.println("HOP");
