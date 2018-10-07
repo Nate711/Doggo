@@ -317,8 +317,8 @@ void TransitionToDance() {
     state = DANCE;
     Serial.println("DANCE");
     //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.15, 0.04, 0.04, 0.75, 0.0, 1.0};
-    gait_gains = {120, 0.48, 80, 0.48};
+    gait_params = {0.15, 0.05, 0.05, 0.35, 0.0, 1.5};
+    gait_gains = {50, 0.5, 30, 0.5};
     PrintGaitParams();
 }
 /**
