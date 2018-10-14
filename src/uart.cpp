@@ -14,7 +14,7 @@
 // TODO: add timeout behavior: throw out buffer if certain time has elapsed since
 // a new message has started being received
 
-THD_WORKING_AREA(waSerialThread, 128);
+THD_WORKING_AREA(waSerialThread, 2048);
 
 THD_FUNCTION(SerialThread, arg) {
     (void)arg;
@@ -27,7 +27,7 @@ THD_FUNCTION(SerialThread, arg) {
     size_t payload_length = 0;
 
     odrv0Serial.clear();
-    odrv0Serial.clear();
+    odrv1Serial.clear();
 
     long msg_start = 0;
     long msg_end = 0;
@@ -35,25 +35,36 @@ THD_FUNCTION(SerialThread, arg) {
 
     while (true) {
         loop_iters++;
-        while (odrv0Serial.available()) {
+        while (odrv1Serial.available()) {
             // Read latest byte out of the serial buffer
-            char c = odrv0Serial.read();
+            char c = odrv1Serial.read();
             switch (rx_state) {
                 case IDLING:
                     if (c == START_BYTE) {
+
+
+                        
 #ifdef DEBUG_LOW
                         msg_start = micros();
                         loop_iters = 0;
 #endif
+
+
                         rx_state = READ_LEN;
                     }
                     break;
                 case READ_LEN:
                     payload_length = c;
                     if (payload_length >= BUFFER_SIZE) {
+
+
+
 #ifdef DEBUG_LOW
                         Serial << "Payload bigger than buffer!\n";
 #endif
+
+
+
                         rx_state = IDLING;
                     } else if (payload_length == 0) {
                         rx_state = READ_PAYLOAD_UNTIL_NL;
@@ -72,12 +83,18 @@ THD_FUNCTION(SerialThread, arg) {
                         rx_state = IDLING;
                         msg_idx = 0;
                         payload_length = 0;
+
+
+
 #ifdef DEBUG_LOW
                         msg_end = micros();
                         Serial << "rcvd in: " << msg_end - msg_start << " in " << loop_iters << " loops\n";
                         // NOTE: As of code 7/7/18, the average receive time was 282us
                         // And number of loop executions to get a message was 34
 #endif
+
+
+
                     }
                     break;
                 case READ_PAYLOAD:
@@ -90,20 +107,23 @@ THD_FUNCTION(SerialThread, arg) {
                         rx_state = IDLING;
                         msg_idx = 0;
                         payload_length = 0;
+
+
+
 #ifdef DEBUG_LOW
                         msg_end = micros();
                         Serial << "rcvd in: " << msg_end - msg_start << " in " << loop_iters << " loops\n";
-                        // NOTE: As of code 7/7/18, the average receive time was 282us
-                        // And number of loop executions to get a message was 34
-                        // NOTE: after finishing protocol (still crash bug), average
-                        // receive time is ~440us in around 30 loops
+                        // NOTE: As of code 10/14/18, the average receive time was 1100
+                        // And number of loop executions to get a message was 0 or 1
 #endif
+
+
+
                     }
                     break;
             }
         }
-        // Run the serial checking loop at 100khz by delaying 10us
-        // chThdSleepMilliseconds(10);
+
         // TODO: make this interrupt driven?
         // NOTE: using yield instead made the whole teensy crash, not sure why....
         chThdSleepMicroseconds(1000000/UART_FREQ);
@@ -131,7 +151,7 @@ void ProcessPositionMsg(char* msg, int len) {
 #endif
 
     float th,ga;
-    int result = odrv0Interface.ParseDualPosition(msg, len, th, ga);
+    int result = ODriveArduino::ParseDualPosition(msg, len, th, ga);
     // result: 1 means success, -1 means didn't get proper message
     if (result == 1) {
         // Update theta and gamma

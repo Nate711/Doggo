@@ -3,7 +3,7 @@
 
 #include "ChRt.h"
 
-extern THD_WORKING_AREA(waSerialThread, 128);
+extern THD_WORKING_AREA(waSerialThread, 2048);
 extern THD_FUNCTION(SerialThread, arg);
 
 void ProcessPositionMsg(char* msg, int len);
