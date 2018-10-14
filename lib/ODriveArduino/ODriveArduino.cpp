@@ -186,7 +186,7 @@ void ODriveArduino::SetDualCurrent(float current0, float current1) {
 }
 
 /**
- * Sends a command for a coupled position in the form "<1><6>C<theta_bytes><gamma_bytes><checksum>".
+ * Sends a command for a coupled position in the form "<1><6>P<theta_bytes><gamma_bytes><checksum>".
  * @param theta      Desired theta setpoint
  * @param gamma      Desired gamma setpoint
  */
@@ -198,14 +198,14 @@ void ODriveArduino::SetCoupledPosition(float theta, float gamma) {
     int16_t gamma_16 = (gamma * MULTIPLIER);
 
     // Calculate the checksum based on the 2 current value shorts
-    uint8_t checkSum = 'D';
+    uint8_t checkSum = 'P';
     checkSum ^= XorShort(theta_16);
     checkSum ^= XorShort(gamma_16);
 
     // Send off bytes
     SendStartByte(); // send start byte
     SendByte(6); // payload length
-    SendByte('D'); // dual current command
+    SendByte('P'); // dual current command
     SendShort(theta_16);
     SendShort(gamma_16);
     SendByte(checkSum);
