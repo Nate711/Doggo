@@ -1,18 +1,9 @@
-#ifndef JUMP_H
-#define JUMP_H
-
+#include "jump.h"
 #include "ODriveArduino.h"
 #include "globals.h"
 #include "position_control.h"
 
-void TrajectoryJump(float t, float launchTime, float stanceHeight,float downAMP, float& x, float& y);
-void MoveLegJump(ODriveArduino& odrive, float t, float launchTime, float stanceHeight, float downAMP, float leg_direction, float sign);
-void StartJump(float start_time_s);
-bool ShouldExecuteJump();
-void ExecuteJump();
-
 // Privates
-bool execute_jump_ = false;
 float start_time_ = 0.0f;
 
 /**
@@ -21,47 +12,8 @@ float start_time_ = 0.0f;
  */
 void StartJump(float start_time_s) {
     start_time_ = start_time_s;
-    execute_jump_ = true;
+    state = JUMP;
 }
-/**
- * Query if a jump should be executed
- */
-bool ShouldExecuteJump() {
-    return execute_jump_;
-}
-
-/**
-* Drives the ODrives in an open-loop, position-control sinTrajectory.
-*/
-void ExecuteJump() {
-    Serial.println("Jump Initialized");
-
-    // min radius = 0.8
-    // max radius = 0.25
-    const float launchTime = 5.0f ;
-    const float stanceHeight = 0.05f; // Desired height of body from ground prior to jump (m)
-    const float downAMP = 0.1f; // Peak amplitude below stanceHeight in sinusoidal trajectory (m)
-
-    float t = millis()/1000.0f - start_time_; // Seconds since jump was commanded
-    if (t > launchTime) {
-        execute_jump_ = false;
-        Serial.println("Jump Complete");
-    } else {
-        float x,y;
-        TrajectoryJump(t, launchTime, stanceHeight, downAMP, x, y);
-
-        // Send commands to odrives
-        float theta, gamma;
-        CartesianToThetaGamma(x, y, 1.0, theta, gamma);
-        odrv0Interface.SetCoupledPosition(theta, 120, 0.48, gamma, 120, 0.48);
-        odrv1Interface.SetCoupledPosition(theta, 120, 0.48, gamma, 120, 0.48);
-        odrv2Interface.SetCoupledPosition(theta, 120, 0.48, gamma, 120, 0.48);
-        odrv3Interface.SetCoupledPosition(theta, 120, 0.48, gamma, 120, 0.48);
-
-        Serial << "Jump: +" << t << "s, y: " << y;
-    }
-}
-
 
 /**
 * Linear increase in height for jump.
@@ -75,4 +27,56 @@ void TrajectoryJump(float t, float launchTime, float stanceHeight,
     //y = downAMP*sin(PI/4 + PI/4*n) + stanceHeight;
 }
 
-#endif
+/**
+* Drives the ODrives in an open-loop, position-control sinTrajectory.
+*/
+void ExecuteJump() {
+    // min radius = 0.8
+    // max radius = 0.25
+    const float prep_time = 0.5f; // Duration before jumping [s]
+    const float launch_time = 0.8f ; // Duration before retracting the leg [s]
+    const float fall_time = 1.0f; //Duration after retracting leg to go back to normal behavior [s]
+
+    const float stance_height = 0.081f; // Desired leg extension before the jump [m]
+    const float jump_extension = 0.249f; // Maximum leg extension in [m]
+    const float fall_extension = 0.13f; // Desired leg extension during fall [m]
+
+    float t = millis()/1000.0f - start_time_; // Seconds since jump was commanded
+
+    if (t < prep_time) {
+        float x = 0;
+        float y = stance_height;
+        float theta,gamma;
+        CartesianToThetaGamma(x, y, 1.0, theta, gamma);
+
+        // Use gains with small stiffness and lots of damping
+        struct LegGain gains = {50, 1.0, 50, 1.0};
+        CommandAllLegs(theta,gamma,gains);
+        // Serial << "Prep: +" << t << "s, y: " << y;
+    } else if (t >= prep_time && t < prep_time + launch_time) {
+        float x = 0;
+        float y = jump_extension;
+        float theta, gamma;
+        CartesianToThetaGamma(x, y, 1.0, theta, gamma);
+
+        // Use high stiffness and low damping to execute the jump
+        struct LegGain gains = {240, 0.5, 240, 0.2};
+        CommandAllLegs(theta, gamma, gains);
+        // Serial << "Jump: +" << t << "s, y: " << y;
+    } else if (t >= prep_time + launch_time && t < prep_time + launch_time + fall_time) {
+        float x = 0;
+        float y = fall_extension;
+        float theta,gamma;
+        CartesianToThetaGamma(x, y, 1.0, theta, gamma);
+
+        // Use low stiffness and lots of damping to handle the fall
+        struct LegGain gains = {50, 1.0, 50, 1.0};
+
+        CommandAllLegs(theta, gamma, gains);
+        // Serial << "Retract: +" << t << "s, y: " << y;
+    } else {
+        state = STOP;
+        Serial.println("Jump Complete.");
+    }
+    // Serial << '\n';
+}

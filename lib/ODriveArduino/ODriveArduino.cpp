@@ -13,6 +13,46 @@ ODriveArduino::ODriveArduino(HardwareSerial& serial)
 : serial_(serial) {}
 
 /**
+ * Set an ODrive property from the Teensy
+ * @param property The ODrive property to set
+ * @param value    The value for the property
+ *
+ * Example: odrv0.SetProperty("axis0.motor.config.current_lim", "5.0f");
+ */
+void ODriveArduino::SetProperty(char* property, char* value) {
+    SendStartByte(); SendNLLen();
+    serial_ << "w " << property << " " << value << '\n';
+}
+
+/**
+ * Read an ODrive property from the Teensy
+ * @param property Property to query
+ * NOTE: You must somehow handle the reponse from the ODrive separately
+ */
+void ODriveArduino::ReadProperty(char* property) {
+    SendStartByte(); SendNLLen();
+    serial_ << "r " << property << "\n";
+}
+
+/**
+ * Set the current limits for both motors.
+ * @param current_lim Current limit
+ */
+void ODriveArduino::SetCurrentLims(float current_lim) {
+    SendStartByte(); SendNLLen();
+    serial_ << "w axis0.motor.config.current_lim " << current_lim << "\n";
+    SendStartByte(); SendNLLen();
+    serial_ << "w axis1.motor.config.current_lim " << current_lim << "\n";
+}
+
+void ODriveArduino::ReadCurrents() {
+    SendStartByte(); SendNLLen();
+    serial_ << "r axis0.motor.current_control.Iq_measured\n";
+    SendStartByte(); SendNLLen();
+    serial_ << "r axis1.motor.current_control.Iq_measured\n";
+}
+
+/**
  * Send a message to the odrive that tells it to send back the vbus voltage
  * Working as of 7/7/18
  */
@@ -146,7 +186,7 @@ void ODriveArduino::SetDualCurrent(float current0, float current1) {
 }
 
 /**
- * Sends a command for a coupled position in the form "<1><6>C<theta_bytes><gamma_bytes><checksum>".
+ * Sends a command for a coupled position in the form "<1><6>P<theta_bytes><gamma_bytes><checksum>".
  * @param theta      Desired theta setpoint
  * @param gamma      Desired gamma setpoint
  */
@@ -158,32 +198,31 @@ void ODriveArduino::SetCoupledPosition(float theta, float gamma) {
     int16_t gamma_16 = (gamma * MULTIPLIER);
 
     // Calculate the checksum based on the 2 current value shorts
-    uint8_t checkSum = 'D';
+    uint8_t checkSum = 'P';
     checkSum ^= XorShort(theta_16);
     checkSum ^= XorShort(gamma_16);
 
     // Send off bytes
     SendStartByte(); // send start byte
     SendByte(6); // payload length
-    SendByte('D'); // dual current command
+    SendByte('P'); // dual current command
     SendShort(theta_16);
     SendShort(gamma_16);
     SendByte(checkSum);
 }
 
-void ODriveArduino::SetCoupledPosition(float sp_theta, float kp_theta, float kd_theta,
-     float sp_gamma, float kp_gamma, float kd_gamma) {
+void ODriveArduino::SetCoupledPosition(float sp_theta, float sp_gamma, struct LegGain gains) {
 
     const int POS_MULTIPLIER = 1000;
     const int GAIN_MULTIPLIER = 100;
 
     int16_t sp_theta_16 = (sp_theta * POS_MULTIPLIER);
-    int16_t kp_theta_16 = (kp_theta * GAIN_MULTIPLIER);
-    int16_t kd_theta_16 = (kd_theta * GAIN_MULTIPLIER);
+    int16_t kp_theta_16 = (gains.kp_theta * GAIN_MULTIPLIER);
+    int16_t kd_theta_16 = (gains.kd_theta * GAIN_MULTIPLIER);
 
     int16_t sp_gamma_16 = (sp_gamma * POS_MULTIPLIER);
-    int16_t kp_gamma_16 = (kp_gamma * GAIN_MULTIPLIER);
-    int16_t kd_gamma_16 = (kd_gamma * GAIN_MULTIPLIER);
+    int16_t kp_gamma_16 = (gains.kp_gamma * GAIN_MULTIPLIER);
+    int16_t kd_gamma_16 = (gains.kd_gamma * GAIN_MULTIPLIER);
 
     // Calculate the checksum based on the 2 current value shorts
     uint8_t checkSum = 'S';
@@ -205,6 +244,10 @@ void ODriveArduino::SetCoupledPosition(float sp_theta, float kp_theta, float kd_
     SendShort(kp_gamma_16);
     SendShort(kd_gamma_16);
     SendByte(checkSum);
+}
+
+void ODriveArduino::SetCoupledPosition(struct LegGain gains) {
+    // TODO: correct but where S command doesn't get enough parameters
 }
 
 /**

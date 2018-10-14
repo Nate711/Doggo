@@ -1,3 +1,6 @@
+[submodule "lib/ChRt"]
+	path = lib/ChRt
+	url = https://github.com/Nate711/ChRt
 [submodule "lib/SdFat"]
 	path = lib/SdFat
 	url = https://github.com/greiman/SdFat.git

@@ -132,6 +132,9 @@ void setup() {
     // Wait for USB Serial.
     while (!Serial) {}
 
+    PrintStates();
+    PrintGaitCommands();
+
     // Make sure the custom firmware is loaded because the default BAUD is 115200
     odrv0Serial.begin(500000);
     odrv1Serial.begin(500000);
@@ -149,8 +152,8 @@ void setup() {
 // Prints the number of idle cycles and maximum delay every 1 second.
 void loop() {
     while (true) {
-        Serial << "Idle thd execs, max micros btn idle: \t";
-        Serial << count << "," << maxDelay << "\n";
+        // Serial << "Idle thd execs, max micros btn idle: \t";
+        // Serial << count << "," << maxDelay << "\n";
         count = 0;
         maxDelay = 0;
 

@@ -23,14 +23,21 @@ public:
     // Commands
     void SetDualCurrent(float current0, float current1);
     void SetCoupledPosition(float theta, float gamma);
-    void SetCoupledPosition(float sp_theta, float kp_theta, float kd_theta, float sp_gamma, float kp_gamma, float kd_gamma);
+    void SetCoupledPosition(float sp_theta, float sp_gamma, struct LegGain gains);
+    void SetCoupledPosition(struct LegGain gains);
     void SetCurrent(int motor_number, float current);
     void SetPosition(int motor_number, float position);
     void SetPosition(int motor_number, float position, float velocity_feedforward);
     void SetPosition(int motor_number, float position, float velocity_feedforward, float current_feedforward);
     void SetVelocity(int motor_number, float velocity);
     void SetVelocity(int motor_number, float velocity, float current_feedforward);
+
+    void SetProperty(char* property, char* value);
+    void ReadProperty(char* property);
     void QueryVBusVoltage();
+
+    void SetCurrentLims(float current_lim);
+    void ReadCurrents();
 
     // Protocol functions
     int ParseDualPosition(char* msg, int len, float& m0, float& m1);
@@ -51,6 +58,15 @@ private:
 
     const char START_BYTE = 1;
     const char NL_LEN = 0;
+};
+
+// Struct to hold PID gains for the legs
+struct LegGain {
+    float kp_theta = 0;
+    float kd_theta = 0;
+
+    float kp_gamma = 0;
+    float kd_gamma = 0;
 };
 
 #endif //ODriveArduino_h

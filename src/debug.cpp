@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "ChRt.h"
 #include "Arduino.h"
 #include "config.h"
@@ -10,7 +11,6 @@
 THD_WORKING_AREA(waPrintDebugThread, 256);
 THD_FUNCTION(PrintDebugThread, arg) {
     (void)arg;
-    int count = 0;
 
     while(true) { // execute at 10hz
         // Print a line saying the variable names every 1s
@@ -19,16 +19,24 @@ THD_FUNCTION(PrintDebugThread, arg) {
         //     count = 0;
         // }
 
-        // Print odrv0 positions
-        Serial  << "M0, M1, feedback time: " ;
-        Serial  << global_debug_values.odrv0.axis0.pos_estimate ;
-        Serial  << "\t" ;
-        Serial  << global_debug_values.odrv0.axis1.pos_estimate ;
-        Serial  << "\t" ;
-        Serial  << global_debug_values.feedback_loop_time;
-        Serial  << "\n";
+        if (enable_debug) {
+            // Print leg positions
+            PrintODriveDebugInfo(global_debug_values.odrv0);
+            Serial << '\t';
+            PrintODriveDebugInfo(global_debug_values.odrv1);
+            Serial << '\t';
+            PrintODriveDebugInfo(global_debug_values.odrv2);
+            Serial << '\t';
+            PrintODriveDebugInfo(global_debug_values.odrv3);
+            Serial.println();
+        }
 
-        count++;
         chThdSleepMilliseconds(1000/DEBUG_PRINT_FREQ);
     }
+}
+
+void PrintODriveDebugInfo(struct ODrive odrv) {
+    Serial.print(odrv.sp_theta, 2);
+    Serial.print('\t');
+    Serial.print(odrv.sp_gamma, 2);
 }
