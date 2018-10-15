@@ -3,7 +3,7 @@
 
 // Define USE_XBEE to cause all debug prints to go through the xbee
 // Comment out the line to debug over usb
-#define USE_XBEE
+// #define USE_XBEE
 
 
 // Define DEBUG_LOW and/or DEBUG_HIGH to enable printing debug messages

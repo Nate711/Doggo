@@ -7,6 +7,8 @@
 #include "SdFat.h"
 #include "SparkFun_BNO080_Arduino_Library.h"
 #include "config.h"
+#include "globals.h"
+
 
 // Initialize SD card pin, file on card, and IMU Project
 File file;
@@ -15,7 +17,7 @@ SdFatSdio sd;
 char fileName;
 BNO080 myIMU;
 
-THD_WORKING_AREA(waDatalogThread, 128);
+THD_WORKING_AREA(waDatalogThread, 2048);
 
 THD_FUNCTION(DatalogThread, arg) {
     (void)arg;
@@ -74,16 +76,20 @@ THD_FUNCTION(DatalogThread, arg) {
         //Initialize string
         String dataString = "";
 
+        long avail = micros();
         //Read IMU DATA
         if (myIMU.dataAvailable() == true)
         {
-            Serial.println("Step1");
+            long tic = micros();
+            Serial << "DataAvailable Time: " << tic - avail << "\n";
+
             //Get quaternion data
             float quatI = myIMU.getQuatI();
             float quatJ = myIMU.getQuatJ();
             float quatK = myIMU.getQuatK();
             float quatReal = myIMU.getQuatReal();
             float quatRadianAccuracy = myIMU.getQuatRadianAccuracy();
+            long tic0 = micros();
 
             //Transform Quat to Euler angles
             // roll (x-axis rotation)
@@ -91,36 +97,46 @@ THD_FUNCTION(DatalogThread, arg) {
             double cosr = +1.0 - 2.0 * (quatI * quatI + quatJ * quatJ);
             float roll = atan2(sinr, cosr);
 
+
+
             // pitch (y-axis rotation)
             double sinp = +2.0 * (quatReal * quatJ - quatK * quatI);
             float pitch;
             if (fabs(sinp) >= 1) {
-                pitch = copysign(M_PI / 2, sinp); // use 90 degrees if out of range
+                pitch = constrain(pitch, -M_PI, M_PI); // use 90 degrees if out of range
             } else {
                 pitch = asin(sinp);
             }
-            Serial.println("Step2");
+
             // yaw (z-axis rotation)
-            double siny = +2.0 * (quatReal * quatK + quatI * quatJ);
-            double cosy = +1.0 - 2.0 * (quatJ * quatJ + quatK * quatK);
+            double cosy = +2.0 * (quatReal * quatK + quatI * quatJ);
+            double siny = +1.0 - 2.0 * (quatJ * quatJ + quatK * quatK);
             float yaw = atan2(siny, cosy);
 
-            dataString += String(roll) + ", " + String(pitch) + ", " + String(yaw);
-
-            Serial.println(quatRadianAccuracy);
-
-
-            //Print to Serial monitor
-            Serial.println(dataString);
-
-            Serial.println("Step3");
             //If the file is available, write to it
             if (!file.sync() || file.getWriteError()) {
                 Serial.println("write error");
             }
-            file.println(dataString);
 
-            Serial.println("Step4");
+            float tic2 = micros();
+            file.print(yaw);
+            file.print(",");
+            file.print(pitch);
+            file.print(",");
+            file.println(roll);
+
+            long toc = micros();
+            Serial << "Elapsed: " << toc-tic << "\n";
+            Serial << "Write: " << tic2-tic << "\n";
+            Serial << "Read Quat: " << tic0-tic << "\n";
+
+            Serial << "Roll: " << roll << "\tPitch: " << pitch << "\tYaw: " << yaw << "\n";
+
+            Serial.println("Wrote Data");
+
+            // TODO: dataAvailable: 2700uS
+            // TODO: sd write: 5400uS
+            // TODO: Read quat: 250uS
         }
 
         //long now = micros();
