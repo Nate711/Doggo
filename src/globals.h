@@ -42,8 +42,10 @@ extern volatile long latest_receive_timestamp;
 
 // Make structs to hold motor readings and setpoints
 struct ODrive {
-    float sp_gamma, sp_theta; // set point values
-    float est_theta, est_gamma; // actual values from the odrive
+    float sp_gamma = 0;
+    float sp_theta = 0; // set point values
+    float est_theta = 0;
+    float est_gamma = 0; // actual values from the odrive
 };
 
 // Struct to hold information helpful for debugging/printing to serial monitor

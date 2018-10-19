@@ -11,7 +11,11 @@
 // current commands to the ODrive(s)
 
 // TODO: add support for multiple ODrives
-
+// void SetCoupledPositionPrime(ODriveArduino& odrv, float theta, float gamma) {
+//   global_debug_values... = theta;
+//
+//   odrv.SetCoupledPosition(theta,gamma);
+// }
 THD_WORKING_AREA(waPositionControlThread, 512);
 
 THD_FUNCTION(PositionControlThread, arg) {
@@ -32,6 +36,8 @@ THD_FUNCTION(PositionControlThread, arg) {
                     float theta1, gamma1, theta2, gamma2;
                     CartesianToThetaGamma(0.0, y1, 1, theta1, gamma1);
                     CartesianToThetaGamma(0.0, y2, 1, theta2, gamma2);
+
+
                     odrv0Interface.SetCoupledPosition(theta2, gamma2, gait_gains);
                     odrv1Interface.SetCoupledPosition(theta1, gamma1, gait_gains);
                     odrv2Interface.SetCoupledPosition(theta1, gamma1, gait_gains);

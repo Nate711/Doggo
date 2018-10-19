@@ -8,7 +8,7 @@
 // PrintDebugThread: Print debugging information to the serial montior at fixed rate
 //
 // TODO: characterize how much bandwidth it uses
-THD_WORKING_AREA(waPrintDebugThread, 256);
+THD_WORKING_AREA(waPrintDebugThread, 1024);
 THD_FUNCTION(PrintDebugThread, arg) {
     (void)arg;
 
@@ -37,6 +37,21 @@ THD_FUNCTION(PrintDebugThread, arg) {
 
 void PrintODriveDebugInfo(struct ODrive odrv) {
     Serial.print(odrv.sp_theta, 2);
-    Serial.print('\t');
+    Serial.print("\t");
+    Serial.print(odrv.est_theta, 2);
+    Serial.print("\t");
     Serial.print(odrv.sp_gamma, 2);
+    Serial.print("\t");
+    Serial.print(odrv.est_gamma, 2);
+    // Serial.printf("odrv%d: sp_th %.2f est_th %.2f sp_ga %.2f est_ga %.2f",
+    //               odrvNum, odrv.sp_theta, 0.0,//odrv.est_theta,
+    //               odrv.sp_gamma, 0.0);//odrv.est_gamma);
+    // Serial.print()
+    // Serial.print(odrv.sp_theta, 2);
+    // Serial.print('\t');
+    // Serial.print(odrv.est_theta, 2);
+    // Serial.print('\t');
+    // Serial.print(odrv.sp_gamma, 2);
+    // Serial.print('\t');
+    // Serial.print(odrv.est_gamma, 2);
 }
