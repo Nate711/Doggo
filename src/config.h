@@ -17,9 +17,18 @@
 #define DEBUG_PRINT_FREQ 20
 #define UART_FREQ 2000
 #define USB_SERIAL_FREQ 100
-#define DATALOG_FREQ 100
+#define DATALOG_FREQ 10
+#define IMU_FREQ 200
 
 #define CURRENT_LIM 40.0f
+
+//------------------------------------------------------------------------------
+// Accessories (not including ODRives)
+
+#define SPI_CS_PIN 1
+#define SPI_WAK_PIN 2
+#define SPI_INTPIN 3
+#define SPI_RSTPIN 4
 
 
 //------------------------------------------------------------------------------

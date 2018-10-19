@@ -26,6 +26,7 @@
 #include "config.h"
 #include "jump.h"
 #include "datalog.h"
+#include "imu.h"
 
 //------------------------------------------------------------------------------
 // E-STOP function
@@ -117,6 +118,10 @@ void chSetup() {
     // Datalog Thread: logs IMU data
     chThdCreateStatic(waDatalogThread, sizeof(waDatalogThread),
         NORMALPRIO, DatalogThread, NULL);
+
+    // IMU Thread: Queries IMU and stores data
+    chThdCreateStatic(waIMUThread, sizeof(waIMUThread),
+        NORMALPRIO, IMUThread, NULL);
 }
 //------------------------------------------------------------------------------
 // Setup thread.
