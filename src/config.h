@@ -12,6 +12,9 @@
 //#define DEBUG_LOW
 // #define PRINT_ONCE
 
+// Setting this value above 0 will cause the imu thread to print debug messages
+#define IMU_VERBOSE 1
+
 // Important: Thread execution frequencies
 #define POSITION_CONTROL_FREQ 100
 #define DEBUG_PRINT_FREQ 20

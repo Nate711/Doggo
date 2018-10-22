@@ -46,11 +46,16 @@ struct ODrive {
     float est_theta, est_gamma; // actual values from the odrive
 };
 
+struct IMU {
+    float yaw, pitch, roll; // Euler angles for robot body
+};
+
 // Struct to hold information helpful for debugging/printing to serial monitor
 struct DebugValues {
     float t;
     long position_reply_time;
     struct ODrive odrv0, odrv1, odrv2, odrv3;
+    struct IMU imu;
 };
 
 extern struct DebugValues global_debug_values;

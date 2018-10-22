@@ -9,9 +9,9 @@
 #include "config.h"
 #include "globals.h"
 
-BNO080 myIMU;
+BNO080 bno080_imu;
 
-THD_WORKING_AREA(waIMUThread, 1924);
+THD_WORKING_AREA(waIMUThread, 1024);
 
 THD_FUNCTION(IMUThread, arg) {
     (void)arg;
@@ -20,41 +20,34 @@ THD_FUNCTION(IMUThread, arg) {
     SPI.begin();
 
     //Initialize IMU
-    Serial.println("Initializing BNO080...");
+    bno080_imu.beginSPI(SPI_CS_PIN, SPI_WAK_PIN, SPI_INTPIN, SPI_RSTPIN);
+    bno080_imu.enableRotationVector(50); //Send data update every 50ms
 
-    myIMU.beginSPI(SPI_CS_PIN, SPI_WAK_PIN, SPI_INTPIN, SPI_RSTPIN);
-    myIMU.enableRotationVector(50); //Send data update every 50ms
-
-    Serial.println(F("Rotation vector enabled"));
-    Serial.println(F("Output in form i, j, k, real, accuracy"));
+    if (IMU_VERBOSE > 0) {
+        Serial.println("Initializing BNO080...");
+        Serial.println(F("Rotation vector enabled at 50Hz"));
+    }
 
     while(true) {
 
-        //Initialize string
-        String dataString = "";
-
-        long avail = micros();
+        long read_begin_ts = micros(); //
         //Read IMU DATA
-        if (myIMU.dataAvailable() == true)
+        if (bno080_imu.dataAvailable() == true)
         {
-            long tic = micros();
-            Serial << "DataAvailable Time: " << tic - avail << "\n";
+            long read_finished_ts = micros();
 
             //Get quaternion data
-            float quatI = myIMU.getQuatI();
-            float quatJ = myIMU.getQuatJ();
-            float quatK = myIMU.getQuatK();
-            float quatReal = myIMU.getQuatReal();
-            float quatRadianAccuracy = myIMU.getQuatRadianAccuracy();
-            long tic0 = micros();
+            float quatI = bno080_imu.getQuatI();
+            float quatJ = bno080_imu.getQuatJ();
+            float quatK = bno080_imu.getQuatK();
+            float quatReal = bno080_imu.getQuatReal();
+            // float quatRadianAccuracy = myIMU.getQuatRadianAccuracy();
 
             //Transform Quat to Euler angles
             // roll (x-axis rotation)
             double sinr = +2.0 * (quatReal * quatI + quatJ * quatK);
             double cosr = +1.0 - 2.0 * (quatI * quatI + quatJ * quatJ);
             float roll = atan2(sinr, cosr);
-
-
 
             // pitch (y-axis rotation)
             double sinp = +2.0 * (quatReal * quatJ - quatK * quatI);
@@ -70,13 +63,18 @@ THD_FUNCTION(IMUThread, arg) {
             double siny = +1.0 - 2.0 * (quatJ * quatJ + quatK * quatK);
             float yaw = atan2(siny, cosy);
 
-            long toc = micros();
-            Serial << "Elapsed: " << toc-tic << "\n";
-            Serial << "Read Quat: " << tic0-tic << "\n";
+            long imu_calc_done_ts = micros();
 
-            Serial << "Roll: " << roll << "\tPitch: " << pitch << "\tYaw: " << yaw << "\n";
+            if (IMU_VERBOSE > 0) {
+                Serial << "uS spent reading IMU: " << read_finished_ts - read_begin_ts << "\n";
+                Serial << "uS total time for IMU: " << imu_calc_done_ts - read_begin_ts << "\n";
+                Serial << "Roll: " << roll << "\tPitch: " << pitch << "\tYaw: " << yaw << "\n";
+            }
 
-            Serial.println("Wrote Data");
+            // Store euler angles to global
+            global_debug_values.imu.yaw = yaw;
+            global_debug_values.imu.pitch = pitch;
+            global_debug_values.imu.roll = roll;
 
             // TODO: dataAvailable: 2700uS
             // TODO: Read quat: 250uS
