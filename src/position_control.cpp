@@ -393,12 +393,22 @@ void test() {
     // odrv0Interface.SetCoupledPosition(0, 2.0f*PI/3.0f, gains);
     // odrv0Interface.ReadCurrents();
 
-    /* Sinusoidal upwards force test */
+    /* Step function force test */
+    // float low = 20.0f; // corresponds to 5.23A if error is pi/6
+    // float high = 80.0f; // corresponds to 20.94A if error is pi/6
+    // float mid = (low + high)/2.0f;
+    // float amp = high - mid;
+    // struct LegGain gains = {0.0, 0.0, low + amp * ((int)(millis()/2000) % 2), 0.5};
+    // odrv0Interface.SetCoupledPosition(0, 2.0*PI/3.0, gains);
+    // odrv0Interface.ReadCurrents();
+
     float low = 20.0f; // corresponds to 5.23A if error is pi/6
     float high = 80.0f; // corresponds to 20.94A if error is pi/6
     float mid = (low + high)/2.0f;
     float amp = high - mid;
-    struct LegGain gains = {0.0, 0.0, low + amp * ((int)(millis()/2000) % 2), 0.5};
+
+    float phase = millis()/1000.0 * gait_params.freq * 2 *PI;
+    struct LegGain gains = {0.0, 0.0, mid + amp * sin(phase), 0.5};
     odrv0Interface.SetCoupledPosition(0, 2.0*PI/3.0, gains);
     odrv0Interface.ReadCurrents();
 
