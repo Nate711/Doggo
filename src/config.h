@@ -28,10 +28,10 @@
 //------------------------------------------------------------------------------
 // Accessories (not including ODRives)
 
-#define SPI_CS_PIN 1
-#define SPI_WAK_PIN 2
-#define SPI_INTPIN 3
-#define SPI_RSTPIN 4
+#define SPI_CS_PIN 10
+#define SPI_WAK_PIN 9
+#define SPI_INTPIN 7
+#define SPI_RSTPIN 8
 
 
 //------------------------------------------------------------------------------

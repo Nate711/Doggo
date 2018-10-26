@@ -21,7 +21,7 @@ THD_FUNCTION(IMUThread, arg) {
 
     //Initialize IMU
     bno080_imu.beginSPI(SPI_CS_PIN, SPI_WAK_PIN, SPI_INTPIN, SPI_RSTPIN);
-    bno080_imu.enableRotationVector(50); //Send data update every 50ms
+    bno080_imu.enableRotationVector(10); //Send data update every 50ms
 
     if (IMU_VERBOSE > 0) {
         Serial.println("Initializing BNO080...");
