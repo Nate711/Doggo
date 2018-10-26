@@ -404,10 +404,25 @@ void test() {
     float high = 80.0f; // corresponds to 20.94A if error is pi/6
     float mid = (low + high)/2.0f;
     float amp = high - mid;
-    struct LegGain gains = {0.0, 0.0, low + amp * ((int)(millis()/2000) % 2), 0.5};
+    float phase = millis()/1000.0 * 2 * PI * gait_params.freq;
+    float gamma_kp = mid + amp * sin(phase);
+    struct LegGain gains = {0.0, 0.0, gamma_kp, 0.5};
     odrv0Interface.SetCoupledPosition(0, 2.0*PI/3.0, gains);
-    odrv0Interface.ReadCurrents();
 
+    global_debug_values.odrv0.sp_theta = 0;
+    global_debug_values.odrv0.sp_gamma = 2.0*PI/3.0;
+
+    float gamma_err = global_debug_values.odrv0.sp_gamma - global_debug_values.odrv0.est_gamma;
+    float gamma_torque = gamma_kp * gamma_err;
+
+    gamma_torque = constrain(gamma_torque, -CURRENT_LIM*2.0f, CURRENT_LIM * 2.0f);
+
+    float m0_current = gamma_torque*0.5;
+    float m1_current = gamma_torque*0.5;
+    float motor_cur_to_leg_force = 1.867; // jacobian when primary links are horizontal
+    float leg_force = motor_cur_to_leg_force * m0_current;
+    // NOTE: printing here
+    Serial << "Kp_I_F:\t" << gamma_kp << "\t" << gamma_torque << "\t" << leg_force << "\n";
 }
 
 void hop(struct GaitParams params) {
