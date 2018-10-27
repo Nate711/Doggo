@@ -21,7 +21,7 @@
 #define UART_FREQ 2000
 #define USB_SERIAL_FREQ 100
 #define DATALOG_FREQ 10
-#define IMU_FREQ 200
+#define IMU_FREQ 100
 
 #define CURRENT_LIM 40.0f
 
