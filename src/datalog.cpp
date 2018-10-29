@@ -25,16 +25,16 @@ THD_FUNCTION(DatalogThread, arg) {
     }
 
     Serial.begin(115200);
-    Serial.println("Initializing SD card...");
 
     //check card is present and can be initialized
     if(!sd.begin()) {
         sd.initErrorHalt();
-        Serial.println("Failed");
+        Serial.println("Failed to initialize SD Card");
         return;
     }
-    Serial.println("Initialized");
-
+    if (DATALOGGER_VERBOSE > 0) {
+        Serial.println("Initialized SD Card");
+    }
 
     //Open the file on SD card (only one open at a time)
     // using BNO080 library
@@ -55,28 +55,27 @@ THD_FUNCTION(DatalogThread, arg) {
         }
         break;
     }
-    Serial.print("Writing to: ");
-    Serial.println(fileName);
+    if (DATALOGGER_VERBOSE > 0) {
+        Serial << ("Writing to file: ") << fileName << "\n";
+    }
 
     while(true) {
         long tic = micros();
 
         // TODO: Query the attitude data from the imu struct
-        float yaw = 0, pitch = 0, roll = 0;
-        file.print(yaw);
+        file.print(global_debug_values.imu.yaw);
         file.print(",");
-        file.print(pitch);
+        file.print(global_debug_values.imu.pitch);
         file.print(",");
-        file.println(roll);
+        file.println(global_debug_values.imu.roll);
 
         if (DATALOGGER_VERBOSE > 0) {
             Serial << "Write took: " << micros()-tic << "us\n";
         }
 
-        // NOTE: sd write: 5400uS
+        // TODO: sd write takes [x] us
 
         chThdSleepMicroseconds(1000000/DATALOG_FREQ);
-
     }
 }
 
