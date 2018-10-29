@@ -40,6 +40,8 @@
 
 //------------------------------------------------------------------------------
 // IMU Parameters
+// Set enable flag to 1 to use accelerometer and gyro, set to 0 to just use gyro
+#define IMU_ENABLE_COMPLEMENTARY_FILTER 1
 #define IMU_COMPLEMENTARY_FILTER_TAU 0.99f
 
 //------------------------------------------------------------------------------
