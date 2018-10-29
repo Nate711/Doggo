@@ -15,13 +15,18 @@
 // Setting this value above 0 will cause the imu thread to print debug messages
 #define IMU_VERBOSE 1
 
+// Set to 1 to enable data logging, set to 0 to disable
+#define ENABLE_DATALOGGER 0
+#define DATALOGGER_VERBOSE 0
+
 // Important: Thread execution frequencies
 #define POSITION_CONTROL_FREQ 100
 #define DEBUG_PRINT_FREQ 20
 #define UART_FREQ 2000
 #define USB_SERIAL_FREQ 100
 #define DATALOG_FREQ 10
-#define IMU_FREQ 100
+#define IMU_FREQ 400
+#define IMU_SEND_FREQ 100
 
 #define CURRENT_LIM 40.0f
 

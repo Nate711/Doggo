@@ -20,6 +20,10 @@ THD_WORKING_AREA(waDatalogThread, 2048);
 THD_FUNCTION(DatalogThread, arg) {
     (void)arg;
 
+    if (ENABLE_DATALOGGER != 1) {
+        return;
+    }
+
     Serial.begin(115200);
     Serial.println("Initializing SD card...");
 
@@ -65,7 +69,9 @@ THD_FUNCTION(DatalogThread, arg) {
         file.print(",");
         file.println(roll);
 
-        Serial << "Write: " << micros()-tic << "\n";
+        if (DATALOGGER_VERBOSE > 0) {
+            Serial << "Write took: " << micros()-tic << "us\n";
+        }
 
         // NOTE: sd write: 5400uS
 
