@@ -22,13 +22,12 @@ THD_FUNCTION(IMUThread, arg) {
     //Initialize IMU
     int polling_period = 1000.0/IMU_SEND_FREQ;
     bno080_imu.beginSPI(SPI_CS_PIN, SPI_WAK_PIN, SPI_INTPIN, SPI_RSTPIN);
-    // bno080_imu.enableRotationVector(polling_period); //Send data update every 10ms
     bno080_imu.enableGyro(polling_period);
     bno080_imu.enableAccelerometer(polling_period);
 
     if (IMU_VERBOSE > 0) {
-        Serial.println("Initializing BNO080...");
-        Serial.println(F("Rotation vector enabled at 100Hz"));
+        Serial << "Initialized BNO080...\n";
+        Serial << "Rotation vector enabled at " << IMU_SEND_FREQ << "Hz\n";
     }
 
     float raw_integrated_gyro_y = 0;
@@ -37,63 +36,68 @@ THD_FUNCTION(IMUThread, arg) {
     float prev_pitch_acc = 0;
     float rotations = 0;
 
+    // The BNO080 will be sending both gyro and accel readings every poll period.
+    // dataAvailable doesn't tell us which sensor was just read so we keep a
+    // counter telling us how many readings we got since the last full read.
+    int sensors_read = 0;
+
     while(true) {
-        long read_begin_ts = micros(); //
-        //Read IMU DATA
+        long read_begin_ts = micros(); // Time stamp for before we started reading
         while (bno080_imu.dataAvailable() == true)
         {
-            long read_finished_ts = micros();
+            // This block is triggered at a rate of 2*IMU_SEND_FREQ
+            sensors_read++;
+            if (sensors_read >= 2) {
+                sensors_read = 0;
+                // This block will execute at the rate of IMU_SEND_FREQ
 
-            // Grab readings from the IMU object
-            float gyroY = bno080_imu.getGyroY();
-            float accelX = bno080_imu.getAccelX();
-            float accelZ = bno080_imu.getAccelZ();
+                long read_finished_ts = micros();
 
-            // Calculate pitch from acceleration data
-            pitch_acc = -atan2(accelX, accelZ);
+                // Grab readings from the IMU object
+                float gyroY = bno080_imu.getGyroY();
+                float accelX = bno080_imu.getAccelX();
+                float accelZ = bno080_imu.getAccelZ();
 
-            // Handle multi rotations
-            if (pitch_acc - prev_pitch_acc > 0.5*M_PI) {
-                rotations -= 1;
+                // Calculate pitch from acceleration data
+                pitch_acc = -atan2(accelX, accelZ);
+
+                // Handle multi rotations
+                if (pitch_acc - prev_pitch_acc > 0.5*M_PI) {
+                    rotations -= 1;
+                }
+                if (pitch_acc - prev_pitch_acc < -0.5*M_PI) {
+                    rotations += 1;
+                }
+                float multi_rot_pitch_acc = 2*M_PI*rotations + pitch_acc;
+
+                // Integrate pitch angular rates
+                pitch_estimate += gyroY / (float)IMU_SEND_FREQ;
+                raw_integrated_gyro_y += gyroY / (float)IMU_SEND_FREQ;
+
+                // Apply complementary filter
+                float tau = IMU_COMPLEMENTARY_FILTER_TAU;
+                pitch_estimate = tau * pitch_estimate + (1-tau) * multi_rot_pitch_acc;
+
+                prev_pitch_acc = pitch_acc;
+
+                long imu_calc_done_ts = micros();
+                if (IMU_VERBOSE > 0) {
+                    Serial << pitch_acc << "\t" << raw_integrated_gyro_y << "\t" << pitch_estimate << "\t" << rotations << "\n";
+
+                }
+                if (IMU_VERBOSE > 1) {
+                    Serial << "uS spent reading IMU: " << read_finished_ts - read_begin_ts << "\n";
+                    Serial << "uS total time for IMU: " << imu_calc_done_ts - read_begin_ts << "\n";
+                }
+
+                // Store euler angles to global variable
+                global_debug_values.imu.pitch = pitch_estimate;
+
+                // TODO: dataAvailable: 2700uS
+                // TODO: Read gyro and accel:
             }
-            if (pitch_acc - prev_pitch_acc < -0.5*M_PI) {
-                rotations += 1;
-            }
-            float multi_rot_pitch_acc = 2*M_PI*rotations + pitch_acc;
-
-            // Integrate pitch angular rates
-            pitch_estimate += gyroY / (float)IMU_FREQ * 2.0;
-            raw_integrated_gyro_y += gyroY / (float)IMU_FREQ * 2.0;
-
-            // Apply complementary filter
-            float tau = 0.99;
-            pitch_estimate = tau * pitch_estimate + (1-tau) * multi_rot_pitch_acc;
-
-            prev_pitch_acc = pitch_acc;
-
-            long imu_calc_done_ts = micros();
-
-            if (IMU_VERBOSE > 0) {
-                // Serial << yaw << "\t" << pitch << "\t" << roll << "\n";
-                // Serial << quatI << "\t" << quatJ << "\t" << quatK << "\t" << quatReal << "\n";
-                Serial << pitch_acc << "\t" << raw_integrated_gyro_y << "\t" << pitch_estimate << "\t" << rotations << "\n";
-
-            }
-            if (IMU_VERBOSE > 1) {
-                Serial << "uS spent reading IMU: " << read_finished_ts - read_begin_ts << "\n";
-                Serial << "uS total time for IMU: " << imu_calc_done_ts - read_begin_ts << "\n";
-            }
-
-            // Store euler angles to global
-            // global_debug_values.imu.yaw = yaw;
-            global_debug_values.imu.pitch = pitch_estimate;
-            // global_debug_values.imu.roll = roll;
-
-            // TODO: dataAvailable: 2700uS
-            // TODO: Read quat: 250uS
         }
 
-        //long now = micros();
         chThdSleepMicroseconds(1000000/IMU_FREQ);
     }
 }

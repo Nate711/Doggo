@@ -38,6 +38,9 @@
 #define SPI_INTPIN 7
 #define SPI_RSTPIN 8
 
+//------------------------------------------------------------------------------
+// IMU Parameters
+#define IMU_COMPLEMENTARY_FILTER_TAU 0.99f
 
 //------------------------------------------------------------------------------
 // Xbee serial
