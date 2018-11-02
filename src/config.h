@@ -13,7 +13,7 @@
 // #define PRINT_ONCE
 
 // Important: Thread execution frequencies
-#define POSITION_CONTROL_FREQ 100
+#define POSITION_CONTROL_FREQ 400
 #define DEBUG_PRINT_FREQ 20
 #define UART_FREQ 2000
 #define USB_SERIAL_FREQ 100

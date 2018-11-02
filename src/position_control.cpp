@@ -417,12 +417,24 @@ void test() {
 
     gamma_torque = constrain(gamma_torque, -CURRENT_LIM*2.0f, CURRENT_LIM * 2.0f);
 
-    float m0_current = gamma_torque*0.5;
-    float m1_current = gamma_torque*0.5;
-    float motor_cur_to_leg_force = 1.867; // jacobian when primary links are horizontal
-    float leg_force = motor_cur_to_leg_force * m0_current;
+    // gamma_current = gamma*kp
+    // gamma_current = 10.47
+    // link_1_force = gamma_current/2 * 3 * 0.028 / 0.09
+    // link_1_force = 0.467 * gamma_current
+    // link_1_force at pi/6 error = kp * pi/6 * 0.467
+    // link_1_force = 0.245* kp
+    // min force = 4.9N, max force = 19.6N
+
+    float I_m0 = gamma_torque*0.5; // motor 0 current
+    float I_m1 = gamma_torque*0.5;
+
+    // If both motors are pushing down with 1A, then the leg force is 1.867N
+    float I_to_foot_force = 1.867;
+    float I_to_link_force = I_to_foot_force/2.0;
+    float link_force = I_to_link_force * I_m0;
+    
     // NOTE: printing here
-    Serial << "Kp_I_F:\t" << gamma_kp << "\t" << gamma_torque << "\t" << leg_force << "\n";
+    Serial << "Kp_I_F:\t" << gamma_kp << "\t" << gamma_torque << "\t" << link_force << "\n";
 }
 
 void hop(struct GaitParams params) {
