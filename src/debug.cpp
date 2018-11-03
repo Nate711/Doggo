@@ -28,6 +28,8 @@ THD_FUNCTION(PrintDebugThread, arg) {
             PrintODriveDebugInfo(global_debug_values.odrv2);
             Serial << '\t';
             PrintODriveDebugInfo(global_debug_values.odrv3);
+            Serial << '\t';
+            Serial << global_debug_values.imu.pitch;
             Serial.println();
         }
 
