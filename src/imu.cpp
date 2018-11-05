@@ -10,6 +10,7 @@
 #include "globals.h"
 
 BNO080 bno080_imu;
+float raw_integrated_gyro_y = 0;
 
 THD_WORKING_AREA(waIMUThread, 4096);
 
@@ -39,11 +40,12 @@ THD_FUNCTION(IMUThread, arg) {
         Serial << "Rotation vector enabled at " << IMU_SEND_FREQ << "Hz\n";
     }
 
-    float raw_integrated_gyro_y = 0;
     float pitch_estimate = 0;
     float pitch_acc = 0;
     float prev_pitch_acc = 0;
     float rotations = 0;
+
+    float velocity_x = 0;
 
     // The BNO080 will be sending both gyro and accel readings every poll period.
     // if we enable the complementary filter.
@@ -83,7 +85,9 @@ THD_FUNCTION(IMUThread, arg) {
 
                     // Integrate pitch angular rates
                     pitch_estimate += gyroY / (float)IMU_SEND_FREQ;
-                    raw_integrated_gyro_y += gyroY / (float)IMU_SEND_FREQ;
+                    raw_integrated_gyro_y += gyroY*cos(pitch_estimate) / (float)IMU_SEND_FREQ;
+
+                    velocity_x += (accelX + 9.81*sin(pitch_estimate)) / (float)IMU_SEND_FREQ;
 
                     // Apply complementary filter
                     float tau = IMU_COMPLEMENTARY_FILTER_TAU;
@@ -93,7 +97,7 @@ THD_FUNCTION(IMUThread, arg) {
 
                     long imu_calc_done_ts = micros();
                     if (IMU_VERBOSE > 0) {
-                        Serial << pitch_acc << "\t" << raw_integrated_gyro_y << "\t" << pitch_estimate << "\t" << rotations << "\n";
+                        Serial << pitch_acc << "\t" << raw_integrated_gyro_y << "\t" << pitch_estimate << "\t" << rotations << "\t" << velocity_x << "\n";
 
                     }
                     if (IMU_VERBOSE > 1) {
@@ -131,6 +135,7 @@ THD_FUNCTION(IMUThread, arg) {
 }
 
 void IMUTarePitch() {
+    raw_integrated_gyro_y = 0;
     global_debug_values.imu.pitch = 0;
     if (IMU_VERBOSE > 0) {
         Serial << "Zero-ed body pitch\n";
