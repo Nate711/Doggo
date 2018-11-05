@@ -1,7 +1,7 @@
 #ifndef POSITION_CONTROL_H
 #define POSITION_CONTROL_H
 
-#include "ChRT.h"
+#include "ChRt.h"
 #include "ODriveArduino.h"
 
 extern THD_WORKING_AREA(waPositionControlThread, 512);

@@ -24,6 +24,9 @@
 #include "usb_serial.h"
 #include "debug.h"
 #include "config.h"
+#include "jump.h"
+#include "datalog.h"
+#include "imu.h"
 
 //------------------------------------------------------------------------------
 // E-STOP function
@@ -77,7 +80,7 @@ void chSetup() {
     // Checks to make sure you enabled cooperature scheduling
     if (CH_CFG_TIME_QUANTUM) {
         Serial.println("You must set CH_CFG_TIME_QUANTUM zero in");
-        Serial.print("src/arm/chconfig_arm.h");
+        Serial.print("src/arm/chconf_arm.h");
         Serial.println(F(" to enable cooperative scheduling."));
         while (true) {}
     }
@@ -111,6 +114,14 @@ void chSetup() {
     // Blink thread: blinks the onboard LED
     chThdCreateStatic(waBlinkThread, sizeof(waBlinkThread),
         NORMALPRIO, BlinkThread, NULL);
+
+    // Datalog Thread: logs IMU data
+    chThdCreateStatic(waDatalogThread, sizeof(waDatalogThread),
+        NORMALPRIO, DatalogThread, NULL);
+
+    // IMU Thread: Queries IMU and stores data
+    chThdCreateStatic(waIMUThread, sizeof(waIMUThread),
+        NORMALPRIO, IMUThread, NULL);
 }
 //------------------------------------------------------------------------------
 // Setup thread.

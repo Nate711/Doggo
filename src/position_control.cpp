@@ -411,7 +411,6 @@ void test() {
     struct LegGain gains = {0.0, 0.0, mid + amp * sin(phase), 0.5};
     odrv0Interface.SetCoupledPosition(0, 2.0*PI/3.0, gains);
     odrv0Interface.ReadCurrents();
-
 }
 
 void hop(struct GaitParams params) {
