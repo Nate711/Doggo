@@ -72,7 +72,7 @@ THD_FUNCTION(IMUThread, arg) {
                     float accelZ = bno080_imu.getAccelZ();
 
                     // Calculate pitch from acceleration data
-                    pitch_acc = -atan2(accelX, accelZ);
+                    pitch_acc = atan2(accelX, accelZ);
 
                     // Handle multi rotations
                     if (pitch_acc - prev_pitch_acc > 0.5*M_PI) {
@@ -84,8 +84,8 @@ THD_FUNCTION(IMUThread, arg) {
                     float multi_rot_pitch_acc = 2*M_PI*rotations + pitch_acc;
 
                     // Integrate pitch angular rates
-                    pitch_estimate += gyroY / (float)IMU_SEND_FREQ;
-                    raw_integrated_gyro_y += gyroY*cos(pitch_estimate) / (float)IMU_SEND_FREQ;
+                    pitch_estimate -= gyroY / (float)IMU_SEND_FREQ;
+                    raw_integrated_gyro_y -= gyroY*cos(pitch_estimate) / (float)IMU_SEND_FREQ;
 
                     velocity_x += (accelX + 9.81*sin(pitch_estimate)) / (float)IMU_SEND_FREQ;
 
@@ -109,7 +109,7 @@ THD_FUNCTION(IMUThread, arg) {
                     global_debug_values.imu.pitch = pitch_estimate;
                 } else {
                     float gyroY = bno080_imu.getGyroY();
-                    raw_integrated_gyro_y += gyroY / (float)IMU_SEND_FREQ;
+                    raw_integrated_gyro_y -= gyroY / (float)IMU_SEND_FREQ;
                     long imu_calc_done_ts = micros();
 
                     if (IMU_VERBOSE > 0) {
