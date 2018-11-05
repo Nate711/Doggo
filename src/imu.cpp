@@ -1,6 +1,3 @@
-#ifndef DATALOG_H
-#define DATALOG_H
-
 #include "arduino.h"
 #include "datalog.h"
 #include "ChRt.h"
@@ -141,5 +138,3 @@ void IMUTarePitch() {
         Serial << "Zero-ed body pitch\n";
     }
 }
-
-#endif

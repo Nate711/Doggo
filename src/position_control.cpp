@@ -69,8 +69,8 @@ THD_FUNCTION(PositionControlThread, arg) {
             case HOP:
                 hop(gait_params);
                 break;
-            case POINT:
-                pointDown();
+            case FLIP:
+                ExecuteFlip();
                 break;
             case TEST:
                 test();

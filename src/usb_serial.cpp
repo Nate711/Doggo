@@ -4,6 +4,7 @@
 #include "globals.h"
 #include "config.h"
 #include "jump.h"
+#include "backflip.h"
 #include "position_control.h"
 
 THD_WORKING_AREA(waUSBSerialThread, 2048);
@@ -130,7 +131,7 @@ void InterpretCommand(char* cmd) {
             TransitionToHop();
             break;
         case 'F':
-            state = POINT;
+            StartFlip(millis()/1000.0f);
             break;
         // // Switch into TEST state
         // TODO: Make new character for test mode
