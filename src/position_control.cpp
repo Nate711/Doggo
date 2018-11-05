@@ -4,6 +4,7 @@
 #include "config.h"
 #include "globals.h"
 #include "jump.h"
+#include "backflip.h"
 
 //------------------------------------------------------------------------------
 // PositionControlThread: Motor position control thread
@@ -67,6 +68,9 @@ THD_FUNCTION(PositionControlThread, arg) {
                 }
             case HOP:
                 hop(gait_params);
+                break;
+            case POINT:
+                pointDown();
                 break;
             case TEST:
                 test();

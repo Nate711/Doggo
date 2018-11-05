@@ -129,6 +129,9 @@ void InterpretCommand(char* cmd) {
         case 'H':
             TransitionToHop();
             break;
+        case 'F':
+            state = POINT;
+            break;
         // // Switch into TEST state
         // TODO: Make new character for test mode
         // case 'T':

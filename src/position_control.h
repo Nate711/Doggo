@@ -40,7 +40,8 @@ enum States {
     JUMP,
     TEST,
     ROTATE,
-    HOP
+    HOP,
+    POINT
 };
 
 extern States state;
