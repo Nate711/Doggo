@@ -72,6 +72,9 @@ THD_FUNCTION(PositionControlThread, arg) {
             case FLIP:
                 ExecuteFlip();
                 break;
+            case RESET:
+                reset();
+                break;
             case TEST:
                 test();
                 break;
@@ -436,6 +439,38 @@ void hop(struct GaitParams params) {
     chThdSleepMicroseconds(1000000*(0.8-params.flight_percent)/freq);
 
 
+}
+
+void reset() {
+    gait_params = {0.17, 0.04, 0.06, 0.35, 0.0, 2.5};
+    gait_gains = {80, 0.5, 50, 0.5};
+
+    struct LegGain retract_gains = {0, 0.5, 6, 0.1};
+    float theta, gamma;
+    CartesianToThetaGamma(0, 0.08, 1, theta, gamma);
+
+    CommandAllLegs(theta, gamma, retract_gains);
+    chThdSleepMilliseconds(4000);
+
+    struct LegGain rotate_gains = {6, 0.1, 2, 1};
+    CommandAllLegs(theta, gamma, rotate_gains);
+    chThdSleepMilliseconds(4000);
+
+    CartesianToThetaGamma(0, gait_params.stance_height, 1, theta, gamma);
+    struct LegGain extend_gains = {6, 0.1, 6, 0.1};
+    CommandAllLegs(theta, gamma, extend_gains);
+    chThdSleepMilliseconds(4000);
+
+    Serial.println("4");
+    chThdSleepMilliseconds(1000);
+    Serial.println("3");
+    chThdSleepMilliseconds(1000);
+    Serial.println("2");
+    chThdSleepMilliseconds(1000);
+    Serial.println("1");
+    chThdSleepMilliseconds(1000);
+
+    state = STOP;
 }
 
 void PrintGaitParams() {

@@ -24,15 +24,15 @@ void StartFlip(float start_time_s) {
     Serial.println("FLIP");
     flip_start_time_ = start_time_s;
     //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.15, 0.05, 0.05, 0.2, 0, 1.0};
-    gait_gains = {120,1,80,1};
+    gait_params = {0.15, 0.07, 0.06, 0.2, 0, 1.0};
+    gait_gains = {120,1,140,1};
     PrintGaitParams();
 }
 
 void ExecuteFlip() {
-    const float prep_time = 0.2f / gait_params.freq; // Duration before jumping [s]
-    const float launch_time = gait_params.flight_percent / gait_params.freq; // Duration before retracting the leg [s]
-    const float fall_time = 1.0f; //Duration after retracting leg to go back to normal behavior [s]
+    const float prep_time = 0.4f; // Duration before jumping [s]
+    const float launch_time = 0.1f; // Duration before retracting the leg [s]
+    const float fall_time = 2.0f; //Duration after retracting leg to go back to normal behavior [s]
 
     float t = millis()/1000.0f - flip_start_time_;
     float pitch = global_debug_values.imu.pitch;
@@ -68,13 +68,11 @@ void ExecuteFlip() {
 
         y = gait_params.stance_height;
         CartesianToThetaGamma(0.0, y, -1, theta, gamma);
-        odrv0Interface.SetCoupledPosition(pitch, gamma, gait_gains);
+        odrv0Interface.SetCoupledPosition(-pitch, gamma, gait_gains);
         CartesianToThetaGamma(0.0, y, 1, theta, gamma);
-        odrv3Interface.SetCoupledPosition(-pitch, gamma, gait_gains);
-    } else {
-        state = STOP;
-        Serial.println("Flip Complete.");
+        odrv3Interface.SetCoupledPosition(pitch, gamma, gait_gains);
     }
+
     global_debug_values.odrv0.sp_theta = -pitch;
     global_debug_values.odrv0.sp_gamma = gamma;
     global_debug_values.odrv3.sp_theta = pitch;

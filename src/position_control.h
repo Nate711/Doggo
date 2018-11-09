@@ -28,6 +28,7 @@ void PrintGaitParams();
 void SetODriveCurrentLimits(float limit);
 void test();
 void hop(struct GaitParams params);
+void reset();
 void CommandAllLegs(float theta, float gamma, struct LegGain gains);
 
 enum States {
@@ -41,7 +42,8 @@ enum States {
     TEST,
     ROTATE,
     HOP,
-    FLIP
+    FLIP,
+    RESET
 };
 
 extern States state;

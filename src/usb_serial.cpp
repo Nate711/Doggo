@@ -119,9 +119,6 @@ void InterpretCommand(char* cmd) {
         case 'P':
             TransitionToPronk();
             break;
-        case 'R':
-            TransitionToRotate();
-            break;
         // Switch into JUMP state
         case 'J':
             StartJump(millis()/1000.0f);
@@ -132,6 +129,10 @@ void InterpretCommand(char* cmd) {
             break;
         case 'F':
             StartFlip(millis()/1000.0f);
+            break;
+        case 'R':
+            state = RESET;
+            Serial.println("RESET");
             break;
         // // Switch into TEST state
         // TODO: Make new character for test mode
