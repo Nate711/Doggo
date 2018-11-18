@@ -45,32 +45,32 @@ void InterpretCommand(char* cmd) {
         // Change gait frequency
         case 'f':
             Serial << "Set freq. to: " << f << "\n";
-            gait_params.freq = f;
+            state_gait_params[state].freq = f;
             break;
         // Change stride length
         case 'l':
             Serial << "Set stride len to: " << f << "\n";
-            gait_params.step_length = f;
+            state_gait_params[state].step_length = f;
             break;
         // Change stance height
         case 'h':
             Serial << "Set stance ht. to: " << f << "\n";
-            gait_params.stance_height = f;
+            state_gait_params[state].stance_height = f;
             break;
         // Change gait up amplitude
         case 'u':
             Serial << "Set up amp. to: " << f << "\n";
-            gait_params.up_amp = f;
+            state_gait_params[state].up_amp = f;
             break;
         // Change gait down amplitude
         case 'd':
             Serial << "Set down amp. to: " << f << "\n";
-            gait_params.down_amp = f;
+            state_gait_params[state].down_amp = f;
             break;
         // Change gait flight percent
         case 'p':
             Serial << "Set flt. perc. to: " << f << "\n";
-            gait_params.flight_percent = f;
+            state_gait_params[state].flight_percent = f;
             break;
         // Change leg gains
         case 'g':

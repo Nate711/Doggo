@@ -4,6 +4,7 @@
 #include "config.h"
 #include "globals.h"
 #include "jump.h"
+#include <math.h>
 
 //------------------------------------------------------------------------------
 // PositionControlThread: Motor position control thread
@@ -23,19 +24,22 @@ THD_FUNCTION(PositionControlThread, arg) {
 
     while(true) {
 
+        struct GaitParams gait_params = state_gait_params[state];
+
         switch(state) {
             case STOP:
                 {
                     // struct LegGain stop_gain = {80, 0.5, 80, 0.5};
-                    float y1 = gait_params.stance_height;
-                    float y2 = gait_params.stance_height;// + gait_params.down_AMP;
-                    float theta1, gamma1, theta2, gamma2;
-                    CartesianToThetaGamma(0.0, y1, 1, theta1, gamma1);
-                    CartesianToThetaGamma(0.0, y2, 1, theta2, gamma2);
-                    odrv0Interface.SetCoupledPosition(theta2, gamma2, gait_gains);
-                    odrv1Interface.SetCoupledPosition(theta1, gamma1, gait_gains);
-                    odrv2Interface.SetCoupledPosition(theta1, gamma1, gait_gains);
-                    odrv3Interface.SetCoupledPosition(theta2, gamma2, gait_gains);
+                    float y = 0.17;
+                    //float y2 = 0.17;// + gait_params.down_AMP;
+                    float theta, gamma; //theta2, gamma2;
+                    CartesianToThetaGamma(0.0, y, 1, theta, gamma);
+                    CommandAllLegs(theta, gamma, gait_gains);
+                    //CartesianToThetaGamma(0.0, y2, 1, theta2, gamma2);
+                    //odrv0Interface.SetCoupledPosition(theta2, gamma2, gait_gains);
+                    //odrv1Interface.SetCoupledPosition(theta1, gamma1, gait_gains);
+                    //odrv2Interface.SetCoupledPosition(theta1, gamma1, gait_gains);
+                    //odrv3Interface.SetCoupledPosition(theta2, gamma2, gait_gains);
                 }
                 break;
             case DANCE:
@@ -80,7 +84,19 @@ long rotate_start = 0; // milliseconds when rotate was commanded
 States state = STOP;
 
 // {stance_height, down_AMP, up_AMP, flight_percent (proportion), step_length, FREQ}
-struct GaitParams gait_params = {0.17, 0.04, 0.06, 0.35, 0.0, 2.5};
+struct GaitParams state_gait_params[] = {
+    //{s.h, d.a., u.a., f.p., s.l., fr.}
+    {NAN, NAN, NAN, NAN, NAN, NAN}, // STOP
+    {0.17, 0.04, 0.06, 0.35, 0.15, 2.0}, // TROT
+    {0.17, 0.04, 0.06, 0.35, 0.0, 2.0}, // BOUND
+    {0.15, 0.00, 0.06, 0.25, 0.0, 1.5}, // WALK
+    {0.12, 0.05, 0.0, 0.75, 0.0, 1.0}, // PRONK
+    {NAN, NAN, NAN, NAN, NAN, NAN}, // JUMP
+    {0.15, 0.05, 0.05, 0.35, 0.0, 1.5}, // DANCE
+    {0.15, 0.05, 0.05, 0.2, 0, 1.0}, // HOP
+    {NAN, NAN, NAN, NAN, NAN, NAN}, // TEST
+    {NAN, NAN, NAN, NAN, NAN, NAN} // ROTATE
+};
 struct LegGain gait_gains = {80, 0.5, 50, 0.5};
 
 /**
@@ -310,6 +326,33 @@ void CommandAllLegs(float theta, float gamma, LegGain gains) {
     global_debug_values.odrv3.sp_gamma = gamma;
 }
 
+void UpdateStateGaitParams(States curr_state) {
+    if (!isnan(state_gait_params[STOP].stance_height)) {
+        state_gait_params[curr_state].stance_height = state_gait_params[STOP].stance_height;
+        state_gait_params[STOP].stance_height = NAN;
+    }
+    if (!isnan(state_gait_params[STOP].down_amp)) {
+        state_gait_params[curr_state].down_amp = state_gait_params[STOP].down_amp;
+        state_gait_params[STOP].down_amp = NAN;
+    }
+    if (!isnan(state_gait_params[STOP].up_amp)) {
+        state_gait_params[curr_state].up_amp = state_gait_params[STOP].up_amp;
+        state_gait_params[STOP].up_amp = NAN;
+    }
+    if (!isnan(state_gait_params[STOP].flight_percent)) {
+        state_gait_params[curr_state].flight_percent = state_gait_params[STOP].flight_percent;
+        state_gait_params[STOP].flight_percent = NAN;
+    }
+    if (!isnan(state_gait_params[STOP].step_length)) {
+        state_gait_params[curr_state].step_length = state_gait_params[STOP].step_length;
+        state_gait_params[STOP].step_length = NAN;
+    }
+    if (!isnan(state_gait_params[STOP].freq)) {
+        state_gait_params[curr_state].freq = state_gait_params[STOP].freq;
+        state_gait_params[STOP].freq = NAN;
+    }
+}
+
 /**
  * Dance gait parameters
  */
@@ -317,7 +360,8 @@ void TransitionToDance() {
     state = DANCE;
     Serial.println("DANCE");
     //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.15, 0.05, 0.05, 0.35, 0.0, 1.5};
+    //gait_params = {0.15, 0.05, 0.05, 0.35, 0.0, 1.5};
+    UpdateStateGaitParams(DANCE);
     gait_gains = {50, 0.5, 30, 0.5};
     PrintGaitParams();
 }
@@ -328,7 +372,8 @@ void TransitionToPronk() {
     state = PRONK;
     Serial.println("PRONK");
     //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.12, 0.05, 0.0, 0.75, 0.0, 1.0};
+    //gait_params = {0.12, 0.05, 0.0, 0.75, 0.0, 1.0};
+    UpdateStateGaitParams(PRONK);
     gait_gains = {80, 0.50, 50, 0.50};
     PrintGaitParams();
 }
@@ -340,7 +385,8 @@ void TransitionToBound() {
     state = BOUND;
     Serial.println("BOUND");
     //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.17, 0.04, 0.06, 0.35, 0.0, 2.0};
+    //gait_params = {0.17, 0.04, 0.06, 0.35, 0.0, 2.0};
+    UpdateStateGaitParams(BOUND);
     gait_gains = {80, 0.5, 50, 0.5};
     PrintGaitParams();
 }
@@ -352,7 +398,8 @@ void TransitionToWalk() {
     state = WALK;
     Serial.println("WALK");
     //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.15, 0.00, 0.06, 0.25, 0.0, 1.5};
+    //gait_params = {0.15, 0.00, 0.06, 0.25, 0.0, 1.5};
+    UpdateStateGaitParams(WALK);
     gait_gains = {80, 0.5, 50, 0.5};
     PrintGaitParams();
 }
@@ -363,7 +410,8 @@ void TransitionToTrot() {
     state = TROT;
     Serial.println("TROT");
     //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.17, 0.04, 0.06, 0.35, 0.15, 2.0};
+    //gait_params = {0.17, 0.04, 0.06, 0.35, 0.15, 2.0};
+    UpdateStateGaitParams(TROT);
     gait_gains = {80, 0.5, 50, 0.5};
     PrintGaitParams();
 }
@@ -378,7 +426,8 @@ void TransitionToHop() {
     state = HOP;
     Serial.println("HOP");
     //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.15, 0.05, 0.05, 0.2, 0, 1.0};
+    //gait_params = {0.15, 0.05, 0.05, 0.2, 0, 1.0};
+    UpdateStateGaitParams(HOP);
     PrintGaitParams();
 }
 
@@ -407,7 +456,7 @@ void test() {
     float mid = (low + high)/2.0f;
     float amp = high - mid;
 
-    float phase = millis()/1000.0 * gait_params.freq * 2 *PI;
+    float phase = millis()/1000.0 * state_gait_params[state].freq * 2 *PI;
     struct LegGain gains = {0.0, 0.0, mid + amp * sin(phase), 0.5};
     odrv0Interface.SetCoupledPosition(0, 2.0*PI/3.0, gains);
     odrv0Interface.ReadCurrents();
@@ -435,12 +484,12 @@ void hop(struct GaitParams params) {
 }
 
 void PrintGaitParams() {
-    Serial << ("(f)req: ") << gait_params.freq << '\n';
-    Serial << ("step (l)ength: ") << gait_params.step_length << '\n';
-    Serial << ("stance (h)eight: ") << gait_params.stance_height << '\n';
-    Serial << ("(d)own amplitude: ") << gait_params.down_amp << '\n';
-    Serial << "(u)p amplitude: " << gait_params.up_amp << '\n';
-    Serial << ("flight (p)roportion: ") << gait_params.flight_percent << '\n';
+    Serial << ("(f)req: ") << state_gait_params[state].freq << '\n';
+    Serial << ("step (l)ength: ") << state_gait_params[state].step_length << '\n';
+    Serial << ("stance (h)eight: ") << state_gait_params[state].stance_height << '\n';
+    Serial << ("(d)own amplitude: ") << state_gait_params[state].down_amp << '\n';
+    Serial << "(u)p amplitude: " << state_gait_params[state].up_amp << '\n';
+    Serial << ("flight (p)roportion: ") << state_gait_params[state].flight_percent << '\n';
     Serial << "Theta: " << gait_gains.kp_theta << " " << gait_gains.kd_theta << '\n';
     Serial << "Gamma: " << gait_gains.kp_gamma << " " << gait_gains.kd_gamma << '\n';
 }
