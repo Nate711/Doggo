@@ -74,7 +74,7 @@ THD_FUNCTION(PositionControlThread, arg) {
                 hop(gait_params);
                 break;
             case FLIP:
-                ExecuteFlip();
+                ExecuteFlip(gait_params);
                 break;
             case RESET:
                 reset();
@@ -102,7 +102,9 @@ struct GaitParams state_gait_params[] = {
     {0.15, 0.05, 0.05, 0.35, 0.0, 1.5}, // DANCE
     {0.15, 0.05, 0.05, 0.2, 0, 1.0}, // HOP
     {NAN, NAN, NAN, NAN, NAN, NAN}, // TEST
-    {NAN, NAN, NAN, NAN, NAN, NAN} // ROTATE
+    {NAN, NAN, NAN, NAN, NAN, NAN}, // ROTATE
+    {0.15, 0.07, 0.06, 0.2, 0, 1.0}, // FLIP
+    {NAN, NAN, NAN, NAN, NAN, NAN} // RESET
 };
 struct LegGain gait_gains = {80, 0.5, 50, 0.5};
 
@@ -491,7 +493,6 @@ void hop(struct GaitParams params) {
 }
 
 void reset() {
-    gait_params = {0.17, 0.04, 0.06, 0.35, 0.0, 2.5};
     gait_gains = {80, 0.5, 50, 0.5};
 
     struct LegGain retract_gains = {0, 0.5, 6, 0.1};
@@ -505,7 +506,7 @@ void reset() {
     CommandAllLegs(theta, gamma, rotate_gains);
     chThdSleepMilliseconds(4000);
 
-    CartesianToThetaGamma(0, gait_params.stance_height, 1, theta, gamma);
+    CartesianToThetaGamma(0, 0.17, 1, theta, gamma);
     struct LegGain extend_gains = {6, 0.1, 6, 0.1};
     CommandAllLegs(theta, gamma, extend_gains);
     chThdSleepMilliseconds(4000);

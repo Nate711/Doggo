@@ -59,7 +59,7 @@ struct GaitParams {
     float freq = 1.0; // Frequency of one gait cycle (Hz)
 };
 
-extern struct GaitParams state_gait_params[10];
+extern struct GaitParams state_gait_params[12];
 extern struct LegGain gait_gains;
 extern long rotate_start; // milliseconds when rotate was commanded
 
