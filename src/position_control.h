@@ -32,19 +32,21 @@ void reset();
 void CommandAllLegs(float theta, float gamma, struct LegGain gains);
 
 enum States {
-    STOP,
-    DANCE,
-    BOUND,
-    TROT,
-    WALK,
-    PRONK,
-    JUMP,
-    TEST,
-    ROTATE,
-    HOP,
-    FLIP,
-    RESET
+    STOP = 0,
+    TROT = 1,
+    BOUND = 2,
+    WALK = 3,
+    PRONK = 4,
+    JUMP = 5,
+    DANCE = 6,
+    HOP = 7,
+    TEST = 8,
+    ROTATE = 9,
+    FLIP = 10,
+    RESET = 11
 };
+
+void UpdateStateGaitParams(States curr_state);
 
 extern States state;
 
@@ -57,7 +59,7 @@ struct GaitParams {
     float freq = 1.0; // Frequency of one gait cycle (Hz)
 };
 
-extern struct GaitParams gait_params;
+extern struct GaitParams state_gait_params[10];
 extern struct LegGain gait_gains;
 extern long rotate_start; // milliseconds when rotate was commanded
 
