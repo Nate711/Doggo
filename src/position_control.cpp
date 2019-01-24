@@ -13,7 +13,11 @@
 // current commands to the ODrive(s)
 
 // TODO: add support for multiple ODrives
-
+// void SetCoupledPositionPrime(ODriveArduino& odrv, float theta, float gamma) {
+//   global_debug_values... = theta;
+//
+//   odrv.SetCoupledPosition(theta,gamma);
+// }
 THD_WORKING_AREA(waPositionControlThread, 512);
 
 THD_FUNCTION(PositionControlThread, arg) {
@@ -31,16 +35,16 @@ THD_FUNCTION(PositionControlThread, arg) {
             case STOP:
                 {
                     // struct LegGain stop_gain = {80, 0.5, 80, 0.5};
-                    float y = 0.17;
-                    //float y2 = 0.17;// + gait_params.down_AMP;
-                    float theta, gamma; //theta2, gamma2;
-                    CartesianToThetaGamma(0.0, y, 1, theta, gamma);
-                    CommandAllLegs(theta, gamma, gait_gains);
-                    //CartesianToThetaGamma(0.0, y2, 1, theta2, gamma2);
-                    //odrv0Interface.SetCoupledPosition(theta2, gamma2, gait_gains);
-                    //odrv1Interface.SetCoupledPosition(theta1, gamma1, gait_gains);
-                    //odrv2Interface.SetCoupledPosition(theta1, gamma1, gait_gains);
-                    //odrv3Interface.SetCoupledPosition(theta2, gamma2, gait_gains);
+                    float y1 = gait_params.stance_height;
+                    float y2 = gait_params.stance_height;// + gait_params.down_AMP;
+                    float theta1, gamma1, theta2, gamma2;
+                    CartesianToThetaGamma(0.0, y1, 1, theta1, gamma1);
+                    CartesianToThetaGamma(0.0, y2, 1, theta2, gamma2);
+
+                    odrv0Interface.SetCoupledPosition(theta2, gamma2, gait_gains);
+                    odrv1Interface.SetCoupledPosition(theta1, gamma1, gait_gains);
+                    odrv2Interface.SetCoupledPosition(theta1, gamma1, gait_gains);
+                    odrv3Interface.SetCoupledPosition(theta2, gamma2, gait_gains);
                 }
                 break;
             case DANCE:
@@ -464,11 +468,37 @@ void test() {
     float high = 80.0f; // corresponds to 20.94A if error is pi/6
     float mid = (low + high)/2.0f;
     float amp = high - mid;
-
-    float phase = millis()/1000.0 * state_gait_params[state].freq * 2 *PI;
-    struct LegGain gains = {0.0, 0.0, mid + amp * sin(phase), 0.5};
+    float phase = millis()/1000.0 * 2 * PI * state_gait_params[state].freq;
+    float gamma_kp = mid + amp * sin(phase);
+    struct LegGain gains = {0.0, 0.0, gamma_kp, 0.5};
     odrv0Interface.SetCoupledPosition(0, 2.0*PI/3.0, gains);
-    odrv0Interface.ReadCurrents();
+
+    global_debug_values.odrv0.sp_theta = 0;
+    global_debug_values.odrv0.sp_gamma = 2.0*PI/3.0;
+
+    float gamma_err = global_debug_values.odrv0.sp_gamma - global_debug_values.odrv0.est_gamma;
+    float gamma_torque = gamma_kp * gamma_err;
+
+    gamma_torque = constrain(gamma_torque, -CURRENT_LIM*2.0f, CURRENT_LIM * 2.0f);
+
+    // gamma_current = gamma*kp
+    // gamma_current = 10.47
+    // link_1_force = gamma_current/2 * 3 * 0.028 / 0.09
+    // link_1_force = 0.467 * gamma_current
+    // link_1_force at pi/6 error = kp * pi/6 * 0.467
+    // link_1_force = 0.245* kp
+    // min force = 4.9N, max force = 19.6N
+
+    float I_m0 = gamma_torque*0.5; // motor 0 current
+    float I_m1 = gamma_torque*0.5;
+
+    // If both motors are pushing down with 1A, then the leg force is 1.867N
+    float I_to_foot_force = 1.867;
+    float I_to_link_force = I_to_foot_force/2.0;
+    float link_force = I_to_link_force * I_m0;
+
+    // NOTE: printing here
+    Serial << "Kp_I_F:\t" << gamma_kp << "\t" << gamma_torque << "\t" << link_force << "\n";
 }
 
 void hop(struct GaitParams params) {

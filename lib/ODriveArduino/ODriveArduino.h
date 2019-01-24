@@ -40,7 +40,7 @@ public:
     void ReadCurrents();
 
     // Protocol functions
-    int ParseDualPosition(char* msg, int len, float& m0, float& m1);
+    static int ParseDualPosition(char* msg, int len, float& m0, float& m1);
 
     // General params
     float readFloat();

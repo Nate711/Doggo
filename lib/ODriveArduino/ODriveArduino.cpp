@@ -67,19 +67,19 @@ void ODriveArduino::QueryVBusVoltage() {
 * TODO: add pll_vel to the message for better motor velocity measurement!!!
 * This would greatly improve the noise on the Kd term!!
 * @param msg    String: Message to parse
-* @param m0     float&: Output parameter for axis0 reading
-* @param m1     float&: Output parameter for axis1 reading
+* @param th     float&: Output parameter for theta reading
+* @param ga     float&: Output parameter for gamma reading
 * @return       int:    1 if success, -1 if failed to find get full message or checksum failed
 */
-int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
+int ODriveArduino::ParseDualPosition(char* msg, int len, float& th, float& ga) {
     // check if 1 byte for "P", 4 bytes holding encoder data, and 1 checksum byte were received
     if (len != 6) {
         return -1; // return -1 to indicate that the message length was wrong
     } else {
         // retrieve short from byte stream
         // remember that the first character is 'P'
-        uint16_t m0_16 = (msg[2] << 8) | msg[1];
-        uint16_t m1_16 = (msg[4] << 8) | msg[3];
+        uint16_t th_16 = (msg[2] << 8) | msg[1];
+        uint16_t ga_16 = (msg[4] << 8) | msg[3];
         uint8_t rcvdCheckSum = msg[5];
 
         // compute checksum
@@ -97,8 +97,8 @@ int ODriveArduino::ParseDualPosition(char* msg, int len, float& m0, float& m1) {
         if (checkSum == rcvdCheckSum) {
             // convert to float
             // TODO: figure out if casts are needed
-            m0 = (float) ((int16_t) m0_16);
-            m1 = (float) ((int16_t) m1_16);
+            th = ((float) ((int16_t) th_16))/1000.0f;
+            ga = ((float) ((int16_t) ga_16))/1000.0f;
             return 1;
         } else {
             // return -1 to indicate that the checksums didn't match
