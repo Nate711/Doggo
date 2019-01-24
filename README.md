@@ -36,11 +36,11 @@ Use a serial monitor (we use the Arduino one) to send over these commands to Dog
 'P': (P)ronk. Much like hop, but this one doesn't work.  
 
 #### Changing gait properties
-'f {float}': Set the gait frequency  
-'l {float}': Set the stride length  
-'h {float}': Set the stance height (neutral height)  
-'u {float}': Set the distance the leg travels above the neutral line during a stride  
-'d {float}': Set the distance the leg travels below the neutral line during a stride  
-'p {float}': Set the proportion of time which the leg is below the neutral line versus above it    
+'f {float}': Set the gait frequency in Hz.  
+'l {float}': Set the stride length in meters.  
+'h {float}': Set the stance height (neutral height) in meters.  
+'u {float}': Set the distance (in meters) that the leg travels above the neutral line during a stride.  
+'d {float}': Set the distance (in meters) the leg travels below the neutral line during a stride.  
+'p {float}': Set the proportion of time which the leg is below the neutral line versus above it.    
 #### Changing compliance (gains)
-'g {float} {float} {float} {float}': Set the compliance gains. The ordering is {kp_theta} {kd_theta} {kp_gamma} {kd_gamma}  
+'g {float} {float} {float} {float}': Set the compliance gains. The ordering is {kp_theta} {kd_theta} {kp_gamma} {kd_gamma}. A good default is 'g 80 0.5 50 0.5'.  
