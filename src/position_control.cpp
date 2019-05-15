@@ -27,8 +27,8 @@ THD_FUNCTION(PositionControlThread, arg) {
             case STOP:
                 {
                     // struct LegGain stop_gain = {80, 0.5, 80, 0.5};
-                    float y1 = gait_params.stance_height;
-                    float y2 = gait_params.stance_height;// + gait_params.down_AMP;
+                    float y1 = 0.13;
+                    float y2 = 0.13;
                     float theta1, gamma1, theta2, gamma2;
                     CartesianToThetaGamma(0.0, y1, 1, theta1, gamma1);
                     CartesianToThetaGamma(0.0, y2, 1, theta2, gamma2);
@@ -70,6 +70,13 @@ THD_FUNCTION(PositionControlThread, arg) {
                 break;
             case TEST:
                 test();
+                break;
+            case TURN_TROT:
+                float desAngle = 0.0;
+                float kp_yaw = 1.0;
+                float stepDiff = 0.1;
+                //CalculateTurningStep(desAngle, kp_yaw, stepDiff);
+                gait(gait_params, 0.0, 0.5, 0.0, 0.5, gait_gains);
                 break;
         }
 
@@ -266,7 +273,6 @@ void CoupledMoveLeg(ODriveArduino& odrive, float t, struct GaitParams params,
     CartesianToThetaGamma(x, y, leg_direction, theta, gamma);
     odrive.SetCoupledPosition(theta, gamma, gains);
 }
-
 void gait(struct GaitParams params,
                 float leg0_offset, float leg1_offset,
                 float leg2_offset, float leg3_offset,
@@ -278,20 +284,25 @@ void gait(struct GaitParams params,
 
     float t = millis()/1000.0;
 
+    struct GaitParams paramsL = params;
+    struct GaitParams paramsR = params;
+    paramsR.step_length += params.step_diff;
+    paramsL.step_length -= params.step_diff;
+
     const float leg0_direction = -1.0;
-    CoupledMoveLeg(odrv0Interface, t, params, leg0_offset, leg0_direction, gains,
+    CoupledMoveLeg(odrv0Interface, t, paramsL, leg0_offset, leg0_direction, gains,
         global_debug_values.odrv0.sp_theta, global_debug_values.odrv0.sp_gamma);
 
     const float leg1_direction = -1.0;
-    CoupledMoveLeg(odrv1Interface, t, params, leg1_offset, leg1_direction, gains,
+    CoupledMoveLeg(odrv1Interface, t, paramsL, leg1_offset, leg1_direction, gains,
         global_debug_values.odrv1.sp_theta, global_debug_values.odrv1.sp_gamma);
 
     const float leg2_direction = 1.0;
-    CoupledMoveLeg(odrv2Interface, t, params, leg2_offset, leg2_direction, gains,
+    CoupledMoveLeg(odrv2Interface, t, paramsR, leg2_offset, leg2_direction, gains,
         global_debug_values.odrv2.sp_theta, global_debug_values.odrv2.sp_gamma);
 
     const float leg3_direction = 1.0;
-    CoupledMoveLeg(odrv3Interface, t, params, leg3_offset, leg3_direction, gains,
+    CoupledMoveLeg(odrv3Interface, t, paramsR, leg3_offset, leg3_direction, gains,
         global_debug_values.odrv3.sp_theta, global_debug_values.odrv3.sp_gamma);
 }
 
@@ -362,8 +373,8 @@ void TransitionToWalk() {
 void TransitionToTrot() {
     state = TROT;
     Serial.println("TROT");
-    //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.17, 0.04, 0.06, 0.35, 0.15, 2.0};
+    //            {s.h, d.a., u.a., f.p., s.l., fr., sd.}
+    gait_params = {0.17, 0.04, 0.06, 0.35, 0.15, 2.0, 0.0};
     gait_gains = {80, 0.5, 50, 0.5};
     PrintGaitParams();
 }
@@ -377,8 +388,17 @@ void TransitionToRotate() {
 void TransitionToHop() {
     state = HOP;
     Serial.println("HOP");
-    //            {s.h, d.a., u.a., f.p., s.l., fr.}
-    gait_params = {0.15, 0.05, 0.05, 0.2, 0, 1.0};
+    //            {s.h, d.a., u.a., f.p., s.l., fr., sd.}
+    gait_params = {0.15, 0.05, 0.05, 0.2, 0, 1.0, 0.0};
+    PrintGaitParams();
+}
+
+void TransitionToTurnTrot() {
+    state = TURN_TROT;
+    Serial.println("TURN_TROT");
+    //            {s.h, d.a., u.a., f.p., s.l., fr., sd.}
+    gait_params = {0.17, 0.04, 0.06, 0.35, 0.1, 2.0, 0.06};
+    gait_gains = {100, 0.5, 40, 0.5};
     PrintGaitParams();
 }
 
@@ -443,4 +463,10 @@ void PrintGaitParams() {
     Serial << ("flight (p)roportion: ") << gait_params.flight_percent << '\n';
     Serial << "Theta: " << gait_gains.kp_theta << " " << gait_gains.kd_theta << '\n';
     Serial << "Gamma: " << gait_gains.kp_gamma << " " << gait_gains.kd_gamma << '\n';
+}
+
+// Calculates the difference in step lengths from desired angle
+void CalculateTurningStep(float desAngle, float kp_yaw, float& stepDiff){
+  float yaw = global_debug_values.imu.yaw;
+  stepDiff = kp_yaw*(desAngle-yaw);
 }

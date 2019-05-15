@@ -8,6 +8,7 @@
 #include "SparkFun_BNO080_Arduino_Library.h"
 #include "config.h"
 #include "globals.h"
+#include "math.h"
 
 BNO080 bno080_imu;
 float raw_integrated_gyro_y = 0;
@@ -112,6 +113,16 @@ THD_FUNCTION(IMUThread, arg) {
                     raw_integrated_gyro_y -= gyroY / (float)IMU_SEND_FREQ;
                     long imu_calc_done_ts = micros();
 
+                    // Get Quaternion values to calculate yaw
+                    float quatI = bno080_imu.getQuatI();
+                    float quatJ = bno080_imu.getQuatJ();
+                    float quatK = bno080_imu.getQuatK();
+                    float quatReal = bno080_imu.getQuatReal();
+
+                    double cosy = +2.0 * (quatReal * quatK + quatI * quatJ);
+                    double siny = +1.0 - 2.0 * (quatJ * quatJ + quatK * quatK);
+                    float yaw = atan2(siny, cosy);
+
                     if (IMU_VERBOSE > 0) {
                         Serial << raw_integrated_gyro_y << "\n";
 
@@ -123,6 +134,7 @@ THD_FUNCTION(IMUThread, arg) {
 
                     // Store euler angles to global variable
                     global_debug_values.imu.pitch = raw_integrated_gyro_y;
+                    global_debug_values.imu.yaw = yaw;
                 }
 
                 // TODO: dataAvailable:

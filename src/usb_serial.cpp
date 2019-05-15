@@ -52,6 +52,10 @@ void InterpretCommand(char* cmd) {
             Serial << "Set stride len to: " << f << "\n";
             gait_params.step_length = f;
             break;
+        case 's':
+            Serial << "Set step difference len to: " << f << "\n";
+            gait_params.step_diff = f;
+            break;
         // Change stance height
         case 'h':
             Serial << "Set stance ht. to: " << f << "\n";
@@ -110,6 +114,10 @@ void InterpretCommand(char* cmd) {
         case 'T':
             TransitionToTrot();
             break;
+        // Switch into TROT state
+        case 'Y':
+            TransitionToTurnTrot();
+            break;
         // Switch into WALK state
         case 'W':
             TransitionToWalk();
@@ -148,9 +156,10 @@ void PrintGaitCommands() {
     Serial.println("(d)own amplitude");
     Serial.println("(u)p amplitude");
     Serial.println("flight (p)roportion");
+    Serial.println("(s)tep difference");
 }
 
 void PrintStates() {
-    Serial.println("STATES: Danc(E), (W)alk, (T)rot, (B)ound, (P)ronk, (S)top, (J)ump");
+    Serial.println("STATES: Danc(E), (W)alk, (T)rot, (B)ound, (P)ronk, (S)top, (J)ump, (Y)TurnTrot");
     Serial.println("Toggle (D)ebug");
 }

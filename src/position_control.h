@@ -20,6 +20,7 @@ void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float 
 void TransitionToDance();
 void TransitionToWalk();
 void TransitionToTrot();
+void TransitionToTurnTrot();
 void TransitionToPronk();
 void TransitionToBound();
 void TransitionToRotate();
@@ -29,6 +30,7 @@ void SetODriveCurrentLimits(float limit);
 void test();
 void hop(struct GaitParams params);
 void CommandAllLegs(float theta, float gamma, struct LegGain gains);
+void CalculateTurningStep(float desAngle, float kp_yaw, float& stepDiff);
 
 enum States {
     STOP,
@@ -40,7 +42,8 @@ enum States {
     JUMP,
     TEST,
     ROTATE,
-    HOP
+    HOP,
+    TURN_TROT
 };
 
 extern States state;
@@ -52,6 +55,7 @@ struct GaitParams {
     float flight_percent = 0.6; // Portion of the gait time should be doing the down portion of trajectory
     float step_length = 0.0; // Length of entire step (m)
     float freq = 1.0; // Frequency of one gait cycle (Hz)
+    float step_diff = 0.0; //difference between left and right leg step length
 };
 
 extern struct GaitParams gait_params;
