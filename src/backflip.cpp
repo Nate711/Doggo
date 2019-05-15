@@ -108,10 +108,11 @@ void ExecuteFlip(struct GaitParams params) {
         float y_front = params.stance_height;
         CommandLegsThetaY(-pitch, y_front, gait_gains, FRONT);
     } else {
+        struct LegGain landing_gains = {120,1,50,1.5};
         float y_back = params.stance_height;
-        CommandLegsThetaY(pitch, y_back, gait_gains, BACK);
+        CommandLegsThetaY(pitch, y_back, landing_gains, BACK);
 
         float y_front = params.stance_height;
-        CommandLegsThetaY(pitch - 2*M_PI, y_front, gait_gains, FRONT);
+        CommandLegsThetaY(pitch - 2*M_PI, y_front, landing_gains, FRONT);
     }
 }
