@@ -30,7 +30,7 @@ THD_FUNCTION(PositionControlThread, arg) {
         switch(state) {
             case STOP:
                 {
-                    // struct LegGain stop_gain = {80, 0.5, 80, 0.5};
+                    //struct LegGain stop_gain = {80, 0.5, 80, 0.5};
                     float y = 0.17;
                     //float y2 = 0.17;// + gait_params.down_AMP;
                     float theta, gamma; //theta2, gamma2;
