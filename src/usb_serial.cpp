@@ -136,10 +136,10 @@ void InterpretCommand(char* cmd) {
             break;
         // // Switch into TEST state
         // TODO: Make new character for test mode
-        // case 'T':
-        //     state = TEST;
-        //     Serial.println("TEST");
-        //     break;
+        case '1':
+            state = TEST;
+            Serial.println("(1)TEST");
+            break;
         default:
             Serial.println("Unknown command");
     }

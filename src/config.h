@@ -25,7 +25,7 @@
 // XBEE Config
 // Define USE_XBEE to cause all debug prints to go through the xbee
 // Comment out the line to debug over usb
-#define USE_XBEE
+// #define USE_XBEE
 
 // Xbee serial
 #ifdef USE_XBEE
