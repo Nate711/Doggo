@@ -56,6 +56,9 @@ THD_FUNCTION(PositionControlThread, arg) {
             case TROT:
                 gait(gait_params, 0.0, 0.5, 0.0, 0.5, gait_gains);
                 break;
+            case TURN_TROT:
+                gait(gait_params, 0.0, 0.5, 0.0, 0.5, gait_gains);
+                break;
             case WALK:
                 gait(gait_params, 0.0, 0.25, 0.75, 0.5, gait_gains);
                 break;
@@ -96,19 +99,20 @@ States state = STOP;
 
 // {stance_height, down_AMP, up_AMP, flight_percent (proportion), step_length, FREQ}
 struct GaitParams state_gait_params[] = {
-    //{s.h, d.a., u.a., f.p., s.l., fr.}
-    {NAN, NAN, NAN, NAN, NAN, NAN}, // STOP
-    {0.17, 0.04, 0.06, 0.35, 0.15, 2.0}, // TROT
-    {0.17, 0.04, 0.06, 0.35, 0.0, 2.0}, // BOUND
-    {0.15, 0.00, 0.06, 0.25, 0.0, 1.5}, // WALK
-    {0.12, 0.05, 0.0, 0.75, 0.0, 1.0}, // PRONK
-    {NAN, NAN, NAN, NAN, NAN, NAN}, // JUMP
-    {0.15, 0.05, 0.05, 0.35, 0.0, 1.5}, // DANCE
-    {0.15, 0.05, 0.05, 0.2, 0, 1.0}, // HOP
-    {NAN, NAN, NAN, NAN, NAN, 1.0}, // TEST
-    {NAN, NAN, NAN, NAN, NAN, NAN}, // ROTATE
-    {0.15, 0.07, 0.06, 0.2, 0, 1.0}, // FLIP
-    {NAN, NAN, NAN, NAN, NAN, NAN} // RESET
+    //{s.h, d.a., u.a., f.p., s.l., fr., s.d.}
+    {NAN, NAN, NAN, NAN, NAN, NAN, NAN}, // STOP
+    {0.17, 0.04, 0.06, 0.35, 0.15, 2.0, 0.0}, // TROT
+    {0.17, 0.04, 0.06, 0.35, 0.0, 2.0, 0.0}, // BOUND
+    {0.15, 0.00, 0.06, 0.25, 0.0, 1.5, 0.0}, // WALK
+    {0.12, 0.05, 0.0, 0.75, 0.0, 1.0, 0.0}, // PRONK
+    {NAN, NAN, NAN, NAN, NAN, NAN, NAN}, // JUMP
+    {0.15, 0.05, 0.05, 0.35, 0.0, 1.5, 0.0}, // DANCE
+    {0.15, 0.05, 0.05, 0.2, 0.0, 1.0, 0.0}, // HOP
+    {NAN, NAN, NAN, NAN, NAN, 1.0, NAN}, // TEST
+    {NAN, NAN, NAN, NAN, NAN, NAN, NAN}, // ROTATE
+    {0.15, 0.07, 0.06, 0.2, 0.0, 1.0, 0.0}, // FLIP
+    {0.17, 0.04, 0.06, 0.35, 0.1, 2.0, 0.06}, // TURN_TROT
+    {NAN, NAN, NAN, NAN, NAN, NAN, NAN} // RESET
 };
 struct LegGain gait_gains = {80, 0.5, 50, 0.5};
 
@@ -301,26 +305,31 @@ void gait(struct GaitParams params,
                 float leg2_offset, float leg3_offset,
                 struct LegGain gains) {
 
-    if (!IsValidGaitParams(params) || !IsValidLegGain(gains)) {
+    struct GaitParams paramsR = params;
+    struct GaitParams paramsL = params;
+    paramsR.step_length += params.step_diff;
+    paramsL.step_length -= params.step_diff;
+
+    if (!IsValidGaitParams(paramsR) || !IsValidGaitParams(paramsL) || !IsValidLegGain(gains)) {
         return;
     }
 
     float t = millis()/1000.0;
 
     const float leg0_direction = -1.0;
-    CoupledMoveLeg(odrv0Interface, t, params, leg0_offset, leg0_direction, gains,
+    CoupledMoveLeg(odrv0Interface, t, paramsL, leg0_offset, leg0_direction, gains,
         global_debug_values.odrv0.sp_theta, global_debug_values.odrv0.sp_gamma);
 
     const float leg1_direction = -1.0;
-    CoupledMoveLeg(odrv1Interface, t, params, leg1_offset, leg1_direction, gains,
+    CoupledMoveLeg(odrv1Interface, t, paramsL, leg1_offset, leg1_direction, gains,
         global_debug_values.odrv1.sp_theta, global_debug_values.odrv1.sp_gamma);
 
     const float leg2_direction = 1.0;
-    CoupledMoveLeg(odrv2Interface, t, params, leg2_offset, leg2_direction, gains,
+    CoupledMoveLeg(odrv2Interface, t, paramsR, leg2_offset, leg2_direction, gains,
         global_debug_values.odrv2.sp_theta, global_debug_values.odrv2.sp_gamma);
 
     const float leg3_direction = 1.0;
-    CoupledMoveLeg(odrv3Interface, t, params, leg3_offset, leg3_direction, gains,
+    CoupledMoveLeg(odrv3Interface, t, paramsR, leg3_offset, leg3_direction, gains,
         global_debug_values.odrv3.sp_theta, global_debug_values.odrv3.sp_gamma);
 }
 
@@ -416,6 +425,7 @@ void TransitionToWalk() {
     gait_gains = {80, 0.5, 50, 0.5};
     PrintGaitParams();
 }
+
 /**
 * Trot gait parameters
 */
@@ -425,7 +435,21 @@ void TransitionToTrot() {
     //            {s.h, d.a., u.a., f.p., s.l., fr.}
     //gait_params = {0.17, 0.04, 0.06, 0.35, 0.15, 2.0};
     UpdateStateGaitParams(TROT);
+    state_gait_params[TROT].step_diff = 0.0; // TROT should always go straight
     gait_gains = {80, 0.5, 50, 0.5};
+    PrintGaitParams();
+}
+
+/**
+* Turn Trot gait parameters
+*/
+void TransitionToTurnTrot() {
+    state = TURN_TROT;
+    Serial.println("TURN_TROT");
+    //            {s.h, d.a., u.a., f.p., s.l., fr., sd.}
+    //gait_params = {0.17, 0.04, 0.06, 0.35, 0.1, 2.0, 0.06};
+    UpdateStateGaitParams(TURN_TROT);
+    gait_gains = {80, 0.5, 80, 0.5};
     PrintGaitParams();
 }
 

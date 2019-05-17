@@ -20,6 +20,7 @@ void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float 
 void TransitionToDance();
 void TransitionToWalk();
 void TransitionToTrot();
+void TransitionToTurnTrot();
 void TransitionToPronk();
 void TransitionToBound();
 void TransitionToRotate();
@@ -43,7 +44,8 @@ enum States {
     TEST = 8,
     ROTATE = 9,
     FLIP = 10,
-    RESET = 11
+    TURN_TROT = 11,
+    RESET = 12
 };
 
 void UpdateStateGaitParams(States curr_state);
@@ -57,9 +59,10 @@ struct GaitParams {
     float flight_percent = 0.6; // Portion of the gait time should be doing the down portion of trajectory
     float step_length = 0.0; // Length of entire step (m)
     float freq = 1.0; // Frequency of one gait cycle (Hz)
+    float step_diff = 0.0; //difference between left and right leg step length
 };
 
-extern struct GaitParams state_gait_params[12];
+extern struct GaitParams state_gait_params[13];
 extern struct LegGain gait_gains;
 extern long rotate_start; // milliseconds when rotate was commanded
 
