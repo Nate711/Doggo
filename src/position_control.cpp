@@ -187,7 +187,7 @@ void SinTrajectory (float t, struct GaitParams params, float gaitOffset, float& 
     float stepLength = params.step_length;
     float FREQ = params.freq;
 
-    p += FREQ * (t - prev_t);
+    p += FREQ * (t - prev_t < 0.5 ? t - prev_t : 0); // should reduce the lurching when starting a new gait
     prev_t = t;
 
     float gp = fmod((p+gaitOffset),1.0); // mod(a,m) returns remainder division of a by m
@@ -307,8 +307,8 @@ void gait(struct GaitParams params,
 
     struct GaitParams paramsR = params;
     struct GaitParams paramsL = params;
-    paramsR.step_length += params.step_diff;
-    paramsL.step_length -= params.step_diff;
+    paramsR.step_length -= params.step_diff;
+    paramsL.step_length += params.step_diff;
 
     if (!IsValidGaitParams(paramsR) || !IsValidGaitParams(paramsL) || !IsValidLegGain(gains)) {
         return;
@@ -372,6 +372,10 @@ void UpdateStateGaitParams(States curr_state) {
     if (!isnan(state_gait_params[STOP].freq)) {
         state_gait_params[curr_state].freq = state_gait_params[STOP].freq;
         state_gait_params[STOP].freq = NAN;
+    }
+    if (!isnan(state_gait_params[STOP].step_diff)) {
+        state_gait_params[curr_state].step_diff = state_gait_params[STOP].step_diff;
+        state_gait_params[STOP].step_diff = NAN;
     }
 }
 
@@ -591,6 +595,7 @@ void PrintGaitParams() {
     Serial << ("(d)own amplitude: ") << state_gait_params[state].down_amp << '\n';
     Serial << "(u)p amplitude: " << state_gait_params[state].up_amp << '\n';
     Serial << ("flight (p)roportion: ") << state_gait_params[state].flight_percent << '\n';
+    Serial << ("(s)tep difference: ") << state_gait_params[state].step_diff << '\n';
     Serial << "Theta: " << gait_gains.kp_theta << " " << gait_gains.kd_theta << '\n';
     Serial << "Gamma: " << gait_gains.kp_gamma << " " << gait_gains.kd_gamma << '\n';
 }
