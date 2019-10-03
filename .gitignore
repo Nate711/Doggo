@@ -2,3 +2,10 @@
 .piolibdeps
 .clang_complete
 .gcc-flags.json
+.cpp.o
+.DS_Store
+.travis.yml
+.checksum
+.pio/build
+.vscode
+.include

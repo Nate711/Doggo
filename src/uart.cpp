@@ -55,7 +55,6 @@ THD_FUNCTION(SerialThread, arg) {
 }
 
 void ProcessSerial(HardwareSerial& odrvSerial, struct MsgParams& odrvMsgParams, struct MsgOutput& odrvMsgOutput){
-
     const int BUFFER_SIZE = odrvMsgParams.BUFFER_SIZE;
     char* msg = odrvMsgParams.msg; // running buffer of received characters
     size_t& msg_idx = odrvMsgParams.msg_idx; // keep track of which index to write to
@@ -67,99 +66,74 @@ void ProcessSerial(HardwareSerial& odrvSerial, struct MsgParams& odrvMsgParams, 
     long& msg_end = odrvMsgParams.msg_end;
     int& loop_iters = odrvMsgParams.loop_iters;
 
-    //while (true) {
-        loop_iters++;
-        while (odrvSerial.available()) {
-            // Read latest byte out of the serial buffer
-            char c = odrvSerial.read();
-            switch (rx_state) {
-                case IDLING:
-                    if (c == START_BYTE) {
-
-
-
-#ifdef DEBUG_LOW
+    loop_iters++;
+    while (odrvSerial.available()) {
+        // Read latest byte out of the serial buffer
+        char c = odrvSerial.read();
+        switch (rx_state) {
+            case IDLING:
+                if (c == START_BYTE) {
+                    #ifdef DEBUG_LOW
                         msg_start = micros();
                         loop_iters = 0;
-#endif
+                    #endif
 
-
-                        rx_state = READ_LEN;
-                    }
-                    break;
-                case READ_LEN:
-                    payload_length = c;
-                    if (payload_length >= BUFFER_SIZE) {
-
-
-
-#ifdef DEBUG_LOW
+                    rx_state = READ_LEN;
+                }
+                break;
+            case READ_LEN:
+                payload_length = c;
+                if (payload_length >= BUFFER_SIZE) {
+                    #ifdef DEBUG_LOW
                         Serial << "Payload bigger than buffer!\n";
-#endif
+                    #endif
 
-
-
-                        rx_state = IDLING;
-                    } else if (payload_length == 0) {
-                        rx_state = READ_PAYLOAD_UNTIL_NL;
-                    } else {
-                        rx_state = READ_PAYLOAD;
+                    rx_state = IDLING;
+                } else if (payload_length == 0) {
+                    rx_state = READ_PAYLOAD_UNTIL_NL;
+                } else {
+                    rx_state = READ_PAYLOAD;
+                }
+                break;
+            case READ_PAYLOAD_UNTIL_NL:
+                msg[msg_idx++] = c;
+                if (c == '\n') {
+                    if (msg_idx < BUFFER_SIZE) {
+                        msg[msg_idx] = '\0'; // null terminate to form string
+                        ProcessNLMessage(msg,msg_idx);
                     }
-                    break;
-                case READ_PAYLOAD_UNTIL_NL:
-                    msg[msg_idx++] = c;
+                    rx_state = IDLING;
+                    msg_idx = 0;
+                    payload_length = 0;
 
-                    if (c == '\n') {
-                        if (msg_idx < BUFFER_SIZE) {
-                            msg[msg_idx] = '\0'; // null terminate to form string
-                            ProcessNLMessage(msg,msg_idx);
-                        }
-                        rx_state = IDLING;
-                        msg_idx = 0;
-                        payload_length = 0;
-
-
-
-#ifdef DEBUG_LOW
+                    #ifdef DEBUG_LOW
                         msg_end = micros();
                         Serial << "rcvd in: " << msg_end - msg_start << " in " << loop_iters << " loops\n";
                         // NOTE: As of code 7/7/18, the average receive time was 282us
                         // And number of loop executions to get a message was 34
-#endif
-
-
-
+                    #endif
+                }
+                break;
+            case READ_PAYLOAD:
+                msg[msg_idx++] = c;
+                if (msg_idx == payload_length) {
+                    if (msg[0] == 'P') {
+                        ProcessPositionMsg(msg, msg_idx, odrvSerial, odrvMsgOutput);
                     }
-                    break;
-                case READ_PAYLOAD:
-                    msg[msg_idx++] = c;
-
-                    if (msg_idx == payload_length) {
-                        if (msg[0] == 'P') {
-                            ProcessPositionMsg(msg, msg_idx, odrvSerial, odrvMsgOutput);
-                        }
-                        rx_state = IDLING;
-                        msg_idx = 0;
-                        payload_length = 0;
-
-
-
-#ifdef DEBUG_LOW
+                    rx_state = IDLING;
+                    msg_idx = 0;
+                    payload_length = 0;
+                    
+                    #ifdef DEBUG_LOW
                         msg_end = micros();
                         Serial << "rcvd in: " << msg_end - msg_start << " in " << loop_iters << " loops\n";
                         // NOTE: As of code 10/14/18, the average receive time was 1100
                         // And number of loop executions to get a message was 0 or 1
-#endif
-
-
-
-                    }
-                    break;
-            }
+                    #endif
+                }
+                break;
         }
-
-
-    //}
+    }
 }
 /**
  * Parse a theta/gamma message from odrv0 and store the result in the odrive struct
@@ -169,16 +143,16 @@ void ProcessSerial(HardwareSerial& odrvSerial, struct MsgParams& odrvMsgParams, 
  * TODO: make it generalizable to other odrives and other odriveInterfaces
  */
 void ProcessPositionMsg(char* msg, int len, HardwareSerial& odrvSerial, struct MsgOutput& odrvMsgOutput) {
-#ifdef DEBUG_LOW
-    for(int i=0; i<len; i++) {
-        Serial << (int)msg[i] << "(" << msg[i] <<") ";
-    }
-    Serial << "\n";
-#endif
+    #ifdef DEBUG_LOW
+        for(int i=0; i<len; i++) {
+            Serial << (int)msg[i] << "(" << msg[i] <<") ";
+        }
+        Serial << "\n";
+    #endif
 
-#ifdef DEBUG_HIGH
-    Serial <<  "rcv at: " << micros() << '\n';
-#endif
+    #ifdef DEBUG_HIGH
+        Serial <<  "rcv at: " << micros() << '\n';
+    #endif
 
     float th,ga;
     int result = ODriveArduino::ParseDualPosition(msg, len, th, ga);
@@ -189,10 +163,9 @@ void ProcessPositionMsg(char* msg, int len, HardwareSerial& odrvSerial, struct M
         *(odrvMsgOutput.theta) = th;
         *(odrvMsgOutput.gamma) = ga;
 
-
-#ifdef DEBUG_LOW
-        Serial << "Th,Ga: " << th << " " << ga << '\n';
-#endif
+        #ifdef DEBUG_LOW
+            Serial << "Th,Ga: " << th << " " << ga << '\n';
+        #endif
 
         // NOTE: it's possible that the feedback delay is wrong if an old
         // encoder reading took so long to come back that it came back after
@@ -206,18 +179,15 @@ void ProcessPositionMsg(char* msg, int len, HardwareSerial& odrvSerial, struct M
         latest_receive_timestamp = micros();
         global_debug_values.position_reply_time = latest_receive_timestamp - latest_send_timestamp;
 
-#ifdef DEBUG_HIGH
-        Serial << "Done prs at: " << micros() << '\n';
-        Serial << "Reply time (uS): " << global_debug_values.position_reply_time << "\n";
-        // NOTE: As of 7/7/18 code, around 1500us from send to receive
-#endif
-
+        #ifdef DEBUG_HIGH
+            Serial << "Done prs at: " << micros() << '\n';
+            Serial << "Reply time (uS): " << global_debug_values.position_reply_time << "\n";
+            // NOTE: As of 7/7/18 code, around 1500us from send to receive
+        #endif
     } else {
-
-#ifdef DEBUG_LOW
-        Serial.println("Parse failed. Wrong message length or bad checksum.");
-#endif
-
+        #ifdef DEBUG_LOW
+            Serial.println("Parse failed. Wrong message length or bad checksum.");
+        #endif
     }
 }
 
