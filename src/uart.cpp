@@ -27,15 +27,23 @@ THD_FUNCTION(SerialThread, arg) {
     struct MsgOutput odrv0MsgOutput;
     odrv0MsgOutput.theta = &(global_debug_values.odrv0.est_theta);
     odrv0MsgOutput.gamma = &(global_debug_values.odrv0.est_gamma);
+    odrv0MsgOutput.current_0 = &(global_debug_values.odrv0.current_0);
+    odrv0MsgOutput.current_1 = &(global_debug_values.odrv0.current_1);
     struct MsgOutput odrv1MsgOutput;
     odrv1MsgOutput.theta = &(global_debug_values.odrv1.est_theta);
     odrv1MsgOutput.gamma = &(global_debug_values.odrv1.est_gamma);
+    odrv1MsgOutput.current_0 = &(global_debug_values.odrv1.current_0);
+    odrv1MsgOutput.current_1 = &(global_debug_values.odrv1.current_1);
     struct MsgOutput odrv2MsgOutput;
     odrv2MsgOutput.theta = &(global_debug_values.odrv2.est_theta);
     odrv2MsgOutput.gamma = &(global_debug_values.odrv2.est_gamma);
+    odrv2MsgOutput.current_0 = &(global_debug_values.odrv2.current_0);
+    odrv2MsgOutput.current_1 = &(global_debug_values.odrv2.current_1);
     struct MsgOutput odrv3MsgOutput;
     odrv3MsgOutput.theta = &(global_debug_values.odrv3.est_theta);
     odrv3MsgOutput.gamma = &(global_debug_values.odrv3.est_gamma);
+    odrv3MsgOutput.current_0 = &(global_debug_values.odrv3.current_0);
+    odrv3MsgOutput.current_1 = &(global_debug_values.odrv3.current_1);
 
     odrv0Serial.clear();
     odrv1Serial.clear();
@@ -100,7 +108,10 @@ void ProcessSerial(HardwareSerial& odrvSerial, struct MsgParams& odrvMsgParams, 
                 if (c == '\n') {
                     if (msg_idx < BUFFER_SIZE) {
                         msg[msg_idx] = '\0'; // null terminate to form string
-                        ProcessNLMessage(msg,msg_idx);
+                        float* current = odrvMsgOutput.current_0;
+                        if (!isnan(*current))
+                            current = odrvMsgOutput.current_1;
+                        ProcessCurrentMessage(msg, msg_idx, current);
                     }
                     rx_state = IDLING;
                     msg_idx = 0;
@@ -191,7 +202,8 @@ void ProcessPositionMsg(char* msg, int len, HardwareSerial& odrvSerial, struct M
     }
 }
 
-void ProcessNLMessage(char* msg, size_t len) {
-    Serial << msg;
+void ProcessCurrentMessage(char* msg, size_t len, float* current) {
+    sscanf(msg, "%f", current);
+    // Serial << msg;
     // Serial << "Received NL message: " << msg;
 }

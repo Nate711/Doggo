@@ -9,7 +9,7 @@ extern THD_WORKING_AREA(waSerialThread, 2048);
 extern THD_FUNCTION(SerialThread, arg);
 
 void ProcessPositionMsg(char* msg, int len, HardwareSerial& odrvSerial, struct MsgOutput& odrvMsgOutput);
-void ProcessNLMessage(char* msg, size_t len);
+void ProcessCurrentMessage(char* msg, size_t len, float* current);
 enum RXState { IDLING, READ_LEN, READ_PAYLOAD, READ_PAYLOAD_UNTIL_NL};
 void ProcessSerial(HardwareSerial& odrvSerial, struct MsgParams& odrvMsgParams, struct MsgOutput& odrvMsgOutput);
 
@@ -29,6 +29,8 @@ struct MsgParams {
 struct MsgOutput{
     float* theta;
     float* gamma;
+    float* current_0;
+    float* current_1;
 };
 
 
