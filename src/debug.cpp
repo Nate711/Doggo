@@ -77,7 +77,7 @@ static void invert(float mat[2][2]) {
     float b = mat[0][1];
     float c = mat[1][0];
     float d = mat[1][1];
-    float invDet = 1.0 / (a * d - b * b);
+    float invDet = 1.0 / (a * d - b * c);
     mat[0][0] = d * invDet;
     mat[0][1] = -b * invDet;
     mat[1][0] = -c * invDet;
