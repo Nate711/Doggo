@@ -114,8 +114,8 @@ static void calculateForce(struct ODrive odrv, float direction, float* xForce, f
         {J[0][1], J[1][1]}
     };
     invert(JT);
-    float tau0 = odrv.current_0 * k;// * direction;
-    float tau1 = odrv.current_1 * k;// * direction;
+    float tau0 = odrv.current_0 * k * direction;
+    float tau1 = odrv.current_1 * k * direction;
     *xForce = JT[0][0] * tau0 + JT[0][1] * tau1;
     *yForce = JT[1][0] * tau0 + JT[1][1] * tau1;
 }
