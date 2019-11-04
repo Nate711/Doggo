@@ -25,6 +25,7 @@ void TransitionToPronk();
 void TransitionToBound();
 void TransitionToRotate();
 void TransitionToHop();
+void TransitionToPivot();
 void PrintGaitParams();
 void SetODriveCurrentLimits(float limit);
 void test();
@@ -45,7 +46,8 @@ enum States {
     ROTATE = 9,
     FLIP = 10,
     TURN_TROT = 11,
-    RESET = 12
+    RESET = 12,
+    PIVOT_CCW = 13
 };
 
 void UpdateStateGaitParams(States curr_state);
@@ -62,7 +64,7 @@ struct GaitParams {
     float step_diff = 0.0; //difference between left and right leg step length
 };
 
-extern struct GaitParams state_gait_params[13];
+extern struct GaitParams state_gait_params[14];
 extern struct LegGain gait_gains;
 extern long rotate_start; // milliseconds when rotate was commanded
 

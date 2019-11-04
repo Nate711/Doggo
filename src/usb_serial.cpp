@@ -143,6 +143,9 @@ void InterpretCommand(char* cmd) {
             state = RESET;
             Serial.println("RESET");
             break;
+        case 'V':
+            TransitionToPivot();
+            break;
         // // Switch into TEST state
         // TODO: Make new character for test mode
         case '1':
