@@ -17,6 +17,7 @@ bool IsValidGaitParams(struct GaitParams params);
 bool IsValidLegGain(struct LegGain gain);
 void SinTrajectoryPosControl();
 void gait(struct GaitParams params, float leg0_offset, float leg1_offset, float leg2_offset, float leg3_offset, struct LegGain gains);
+void TransitionToStop();
 void TransitionToDance();
 void TransitionToWalk();
 void TransitionToTrot();

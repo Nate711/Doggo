@@ -379,6 +379,11 @@ void UpdateStateGaitParams(States curr_state) {
     }
 }
 
+void TransitionToStop() {
+    state = STOP;
+    Serial.println("STOP");
+}
+
 /**
  * Dance gait parameters
  */

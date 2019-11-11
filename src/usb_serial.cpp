@@ -101,8 +101,7 @@ void InterpretCommand(char* cmd) {
             break;
         // Switch into STOP state
         case 'S':
-            state = STOP;
-            Serial.println("STOP");
+            TransitionToStop();
             break;
         // Switch into DANCE state
         case 'E':
