@@ -17,7 +17,7 @@ static float deadband(float x, float db) {
 THD_WORKING_AREA(waPrintDebugThread, 1024);
 THD_FUNCTION(PrintDebugThread, arg) {
     (void)arg;
-    float events[10];
+    float events[13];
     ODrive * odrvs[4] = {&global_debug_values.odrv0, &global_debug_values.odrv1, 
                        &global_debug_values.odrv2, &global_debug_values.odrv3};
     initializeHaptics();
@@ -28,6 +28,9 @@ THD_FUNCTION(PrintDebugThread, arg) {
         //     count = 0;
         // }
         getAllEvents(odrvs, events);
+        getEvent(10, global_debug_values.imu.accelX, events);
+        getEvent(11, global_debug_values.imu.accelY, events);
+        getEvent(12, global_debug_values.imu.accelZ, events);
         for (int i = 0; i < 4; i++) {
                 odrvs[i]->current_0 = NAN;
         }
@@ -37,9 +40,11 @@ THD_FUNCTION(PrintDebugThread, arg) {
         odrv3Interface.ReadCurrents();
         processEvents(events);
         if (enable_debug) {
-            Serial.print(deadband(events[8],1.5));
+            Serial.print(deadband(events[10], 1.5));
             Serial.print(",");
-            Serial.print(deadband(events[9],1.5));
+            Serial.print(deadband(events[11], 1.5));
+            Serial.print(",");
+            Serial.print(deadband(events[12], 1.5));
             Serial.println();
         }
 

@@ -25,12 +25,13 @@ THD_FUNCTION(IMUThread, arg) {
     }
     bno080_imu.enableGyro(polling_period);
 
+
     // Enable accelerometer according to config
     int sensor_count = 1;
-    if (IMU_ENABLE_COMPLEMENTARY_FILTER) {
+    //if (IMU_ENABLE_COMPLEMENTARY_FILTER) {
         bno080_imu.enableAccelerometer(polling_period);
         sensor_count = 2;
-    }
+    //}
 
     if (IMU_VERBOSE > 0) {
         Serial << "Initialized BNO080...\n";
@@ -124,6 +125,10 @@ THD_FUNCTION(IMUThread, arg) {
 
                 // TODO: dataAvailable:
                 // TODO: Read gyro and accel:
+
+                global_debug_values.imu.accelX = bno080_imu.getAccelX();
+                global_debug_values.imu.accelY = bno080_imu.getAccelY();
+                global_debug_values.imu.accelZ = bno080_imu.getAccelZ();
             }
         }
 

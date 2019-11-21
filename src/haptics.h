@@ -3,6 +3,8 @@
 #include "globals.h"
 #include "config.h"
 
+#define NUM_EVENTS 13
+
 void invertMatrix(float m[2][2]);
 void calcForces(struct ODrive odrv, float direction, float* xForce, float* yForce);
 void getAllEvents(ODrive * odrvs[4], float events[10]);

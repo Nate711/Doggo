@@ -2,10 +2,10 @@
 #include "position_control.h"
 
 const int SEQUENCE_LENGTH = DEBUG_PRINT_FREQ;
-float forces[10][SEQUENCE_LENGTH];
+float forces[NUM_EVENTS][SEQUENCE_LENGTH];
 
-float means[10];
-float devs[10];
+float means[NUM_EVENTS];
+float devs[NUM_EVENTS];
 
 int currentIndex = 0;
 int resetIndex = 0;
@@ -22,7 +22,7 @@ void invertMatrix(float mat[2][2]) {
     mat[1][1] = a * invDet;
 }
 
-void calculateForce(struct ODrive odrv, float direction, float* xForce, float* yForce) {
+void calculateForce(const struct ODrive& odrv, float direction, float* xForce, float* yForce) {
     float gamma = odrv.est_gamma;
     float theta = odrv.est_theta;
 
@@ -80,7 +80,7 @@ void getAllEvents(ODrive * odrvs[4], float events[10]) {
     // Serial.println();
 }
 
-void getEvent(int eventIndex, float force, float events[10]) {
+void getEvent(int eventIndex, float force, float events[NUM_EVENTS]) {
     // Serial.print(force);
     // Serial.print(",");
     // Serial.print(means[eventIndex]);
@@ -100,17 +100,17 @@ void getEvent(int eventIndex, float force, float events[10]) {
     devs[eventIndex] = abs(dev);
 }
 
-void processEvents(float events[10]) {
+void processEvents(float events[NUM_EVENTS]) {
     if (resetIndex != -1)
         return;
-    float absX = abs(events[8]);
+    float absX = abs(events[10]);
     float absY = abs(events[9]);
-    if ((absY > 1.5 || (absX > 1.5 && absX < 1.75)) && state != STOP) {
+    if ((absY > 1.5 || absX > 1.5 ) && state != STOP) {
         TransitionToStop();
         resetEvents();
-    } else if (absX > 1.75) {
+    } else if (absX > 1.5) {
         TransitionToTrot();
-        state_gait_params[state].step_length = (events[8]/absX) * 0.15;
+        state_gait_params[state].step_length = (events[10]/absX) * 0.15;
         resetEvents();
     }
 }
@@ -120,7 +120,7 @@ void resetEvents() {
 }
 
 void initializeHaptics() {
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < NUM_EVENTS; i++) {
         devs[i] = 0;
         means[i] = 0;
         for (int j = 0; j < SEQUENCE_LENGTH; j++) {

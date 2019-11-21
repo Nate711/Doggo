@@ -51,7 +51,7 @@ struct ODrive {
 };
 
 struct IMU {
-    float yaw, pitch, roll; // Euler angles for robot body
+    float yaw, pitch, roll, accelX, accelY, accelZ; // Euler angles for robot body
 };
 
 // Struct to hold information helpful for debugging/printing to serial monitor
