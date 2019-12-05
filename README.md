@@ -47,3 +47,6 @@ Use a serial monitor (we use the Arduino one) to send over these commands to Dog
 - 's {float}': Set the difference in step lengths between the two sides in meters. Between -0.08 and 0.08 are good values. Default for trot is 0.0m.
 #### Changing compliance (gains)
 - 'g {float} {float} {float} {float}': Set the compliance gains. The ordering is {kp_theta} {kd_theta} {kp_gamma} {kd_gamma}. A good default is 'g 80 0.5 50 0.5'.  
+
+### Using a joystick controller
+We have implemented basic support for controlling the robot from a Playstation dual shock controller. To use the controller, we actually use the same firmware, and instead add a program on the host computer's side that reads joystick values and sends the appropriate trot, stop, etc commands to the robot using the text-based XBee serial interface. You can find the code here: https://github.com/stanfordroboticsclub/DoggoCommand
